@@ -117,7 +117,7 @@ QLineEdit {
 	color: #d3dae3;
 }
 QLabel {
-	color: #d3dae3;
+	color: white;
 }
 QLCDNumber {
 	color: #4d9b87;
@@ -528,4 +528,7 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
 }
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
    background: none;
+}
+QGroupBox{
+	color: white;
 }

@@ -45,6 +45,14 @@ MainWindow::MainWindow(QWidget *parent)
     QString qss = file.readAll();
     this->setStyleSheet(qss);
     file.close();
+    //设置窗口位置大小
+    int width = 1000;
+    int height = 600;
+    QScreen* screen = QGuiApplication::primaryScreen();
+    QRect screenGeometry = screen->geometry();
+    int x = (screenGeometry.width() - width) / 2;
+    int y = (screenGeometry.height() - height) / 2;
+    this->setGeometry(x, y, width, height);
     //布局设置
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(0);

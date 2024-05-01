@@ -366,5 +366,4 @@ finite-element-cuda-new/include
 finite-element-cuda-new/lib
 finite-element-cuda-new/x64
 finite-element-cuda-new/*.txt
-finite-element-cuda-new/*.qss
 finite-element-cuda-new/*.png
