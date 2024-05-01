@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/MainWindows">
+        <file>title.png</file>
+        <file>ManjaroMix.qss</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>ManjaroMix.qss</file>
+    </qresource>
+</RCC>
