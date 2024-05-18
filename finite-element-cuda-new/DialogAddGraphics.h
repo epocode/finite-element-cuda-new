@@ -10,8 +10,10 @@ class DialogAddGraphics : public QDialog
 {
     Q_OBJECT
 
+private:
+    double lc;
 public:
-    explicit DialogAddGraphics(QWidget *parent = nullptr);
+    explicit DialogAddGraphics(QWidget *parent = nullptr, double lc=0.0);
     ~DialogAddGraphics();
 
 private slots:

@@ -1,0 +1,67 @@
+#include "Controller.h"
+#include "MshInformation.h"
+#include "CalcTools.h"
+extern MshInformation mshInfo;
+
+Controller::Controller(QObject *parent)
+	: QObject(parent)
+{}
+
+Controller::~Controller()
+{}
+
+void Controller::addRectToMsh(double x, double y, double width, double height)
+{
+	mshInfo.addRect(x, y, width, height);
+}
+
+void Controller::addCircleToMsh(double x, double y, double radius)
+{
+	mshInfo.addCircle(x, y, radius);
+}
+
+void Controller::generateMsh()
+{
+	mshInfo.createMsh();
+}
+
+void Controller::saveMsh()
+{
+	mshInfo.saveMsh();
+}
+
+bool Controller::loadMsh()
+{
+	return mshInfo.loadMsh();
+}
+
+void Controller::addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection)
+{
+	mshInfo.addUniformLoad(startX, startY, endX, endY, xDirection, yDirection);
+}
+
+void Controller::addPointForce(double x, double y, double xForce, double yForce)
+{
+	mshInfo.addPointForce(x, y, xForce, yForce);
+}
+
+void Controller::addEdges(double x, double y, bool xFixed, bool yFixed)
+{
+	CalcTools::setEdge(x, y, xFixed, yFixed);
+}
+
+void Controller::saveConstraint()
+{
+	mshInfo.saveConstraint();
+}
+
+void Controller::loadConstraint()
+{
+	mshInfo.loadConstraint();
+}
+
+void Controller::generateMatrixes(double E, double v, double t)
+{
+	CalcTools::generateMatrixes(E, v, t);
+}
+

@@ -18,7 +18,12 @@ public:
     ~MainWindow();
     QPen pen;
     bool paintState;
-
+private:
+    struct pair_hash {
+        inline std::size_t operator()(const std::pair<int, int>& v) const {
+            return v.first * 31 + v.second;
+        }
+    };
 private:
     Ui::MainWindow *ui;
     QAction *renderAction;
@@ -46,7 +51,7 @@ private slots:
     void openMsh();
     void saveConstraint();
     void openConstraint();
-    void handleClick(QPointF point);
+    void handleDoubleClick(QPointF point);
     void activateCalc();
     void setRenderEnable(bool enable);
     void updateProgressBar(int value);

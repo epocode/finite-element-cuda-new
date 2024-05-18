@@ -532,3 +532,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 QGroupBox{
 	color: white;
 }
+QMessageBox QLabel#qt_msgbox_label {
+    color: black;
+}

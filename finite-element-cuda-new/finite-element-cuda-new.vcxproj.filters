@@ -52,13 +52,13 @@
     <ClCompile Include="publicElement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PublicTools.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="QGraphicsViewEventFilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MyGraphicsView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MyStackedWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Controller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,10 +89,13 @@
     <QtMoc Include="DialogEdgeAdd.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="QGraphicsViewEventFilter.h">
+    <QtMoc Include="MyGraphicsView.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="MyGraphicsView.h">
+    <QtMoc Include="MyStackedWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Controller.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
@@ -104,9 +107,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="publicElement.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PublicTools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cusolver_utils.h">

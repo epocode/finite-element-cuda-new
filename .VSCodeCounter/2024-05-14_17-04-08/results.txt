@@ -1,0 +1,57 @@
+Date : 2024-05-14 17:04:08
+Directory : c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new
+Total : 26 files,  2192 codes, 118 comments, 327 blanks, all 2637 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| C++      |         22 |      1,668 |         92 |        268 |      2,028 |
+| CUDA C++ |          2 |        191 |          8 |         41 |        240 |
+| YAML     |          1 |        187 |         12 |         18 |        217 |
+| XML      |          1 |        146 |          6 |          0 |        152 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                     | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                        |         26 |      2,192 |        118 |        327 |      2,637 |
+| . (Files)                                                                                                |         25 |      2,005 |        106 |        309 |      2,420 |
+| include                                                                                                  |          1 |        187 |         12 |         18 |        217 |
+| include\eigen-3.4.0                                                                                      |          1 |        187 |         12 |         18 |        217 |
+| include\eigen-3.4.0\ci                                                                                   |          1 |        187 |         12 |         18 |        217 |
++----------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                                 | language | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\CalcTools.cpp                              | C++      |        317 |          7 |         30 |        354 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\CalcTools.h                                | C++      |         20 |          0 |          3 |         23 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\Controller.cpp                             | C++      |         49 |          0 |         14 |         63 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\Controller.h                               | C++      |         20 |          1 |          3 |         24 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\DialogAddForces.cpp                        | C++      |         34 |          0 |          8 |         42 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\DialogAddForces.h                          | C++      |         17 |          0 |          8 |         25 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\DialogAddGraphics.cpp                      | C++      |         44 |          4 |          9 |         57 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\DialogAddGraphics.h                        | C++      |         23 |          0 |          8 |         31 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\DialogEdgeAdd.cpp                          | C++      |         21 |          0 |          5 |         26 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\DialogEdgeAdd.h                            | C++      |         18 |          0 |          7 |         25 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MainWindow.cpp                             | C++      |        318 |         20 |         45 |        383 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MainWindow.h                               | C++      |         51 |          0 |         10 |         61 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MatrixSolver.cu                            | CUDA C++ |        157 |          6 |         37 |        200 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MatrixSolver.cuh                           | CUDA C++ |         34 |          2 |          4 |         40 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MshInformation.cpp                         | C++      |        308 |          3 |         30 |        341 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MshInformation.h                           | C++      |         54 |          7 |         12 |         73 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MyGraphicsView.cpp                         | C++      |         47 |          6 |          8 |         61 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MyGraphicsView.h                           | C++      |         24 |          0 |          2 |         26 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MyStackedWidget.cpp                        | C++      |         12 |          0 |          3 |         15 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\MyStackedWidget.h                          | C++      |         14 |          0 |          2 |         16 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\cusolver_utils.h                           | C++      |        218 |         44 |         48 |        310 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\finite-element-cuda-new.vcxproj            | XML      |        146 |          6 |          0 |        152 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\include\eigen-3.4.0\ci\build.gitlab-ci.yml | YAML     |        187 |         12 |         18 |        217 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\main.cpp                                   | C++      |          9 |          0 |          2 |         11 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\publicElement.cpp                          | C++      |          7 |          0 |          2 |          9 |
+| c:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new\publicElement.h                            | C++      |         43 |          0 |          9 |         52 |
+| Total                                                                                                    |          |      2,192 |        118 |        327 |      2,637 |
++----------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

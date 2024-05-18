@@ -72,7 +72,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\coding\cpp\finite-element-cuda-new\finite-element-cuda-new;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -104,11 +104,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Controller.cpp" />
     <ClCompile Include="MshInformation.cpp" />
     <ClCompile Include="MyGraphicsView.cpp" />
+    <ClCompile Include="MyStackedWidget.cpp" />
     <ClCompile Include="publicElement.cpp" />
-    <ClCompile Include="PublicTools.cpp" />
-    <ClCompile Include="QGraphicsViewEventFilter.cpp" />
     <QtRcc Include="MainWindows.qrc" />
     <QtUic Include="DialogAddForces.ui" />
     <QtUic Include="DialogAddGraphics.ui" />
@@ -126,12 +126,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CalcTools.h" />
+    <QtMoc Include="Controller.h" />
     <ClInclude Include="cusolver_utils.h" />
     <ClInclude Include="MshInformation.h" />
     <QtMoc Include="MyGraphicsView.h" />
+    <QtMoc Include="MyStackedWidget.h" />
     <ClInclude Include="publicElement.h" />
-    <ClInclude Include="PublicTools.h" />
-    <QtMoc Include="QGraphicsViewEventFilter.h" />
     <QtMoc Include="DialogEdgeAdd.h" />
     <QtMoc Include="DialogAddGraphics.h" />
     <QtMoc Include="DialogAddForces.h" />
