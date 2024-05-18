@@ -290,7 +290,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="initPage">
        <layout class="QHBoxLayout" name="horizontalLayout">
@@ -318,12 +318,12 @@
            </font>
           </property>
           <property name="text">
-           <string>拾取直线的起点或者输入x，y：</string>
+           <string>输入点的坐标值x y：</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineStartInput"/>
+         <widget class="QLineEdit" name="startInput"/>
         </item>
        </layout>
       </widget>
@@ -342,7 +342,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEndInput"/>
+         <widget class="QLineEdit" name="endInput"/>
         </item>
        </layout>
       </widget>

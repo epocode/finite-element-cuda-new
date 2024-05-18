@@ -72,7 +72,11 @@ MainWindow::MainWindow(QWidget *parent)
     QAction *saveAction = fileMenu->addAction(tr("保存"));
     QAction *openAction = fileMenu->addAction(tr("打开"));
 
-    QAction *addGraphicsAction = this->menuBar()->addAction(tr("添加图形"));
+    QMenu *graphicsMenu = this->menuBar()->addMenu(tr("图形"));
+    QAction *addFixedGraphicsAction = graphicsMenu->addAction(tr("添加固定图形"));
+    QAction* addPolygonAction = graphicsMenu->addAction(tr("添加多边形"));
+
+
     QAction *generateMshAction = this->menuBar()->addAction(tr("生成网格"));
 
     QMenu *calcMenu = this->menuBar()->addMenu(tr("约束"));
@@ -98,7 +102,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     //链接槽函数
     connect(redoAction, &QAction::triggered, this, &MainWindow::clear);
-    connect(addGraphicsAction, &QAction::triggered, this, &MainWindow::addGraphics);
+    connect(addFixedGraphicsAction, &QAction::triggered, this, &MainWindow::addGraphics);
+    connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
+    connect(ui->startInput, &QLineEdit::returnPressed, this, &MainWindow::textEntered);
+    connect(this, &MainWindow::sendTextToGraphicViewSignal, ui->graphicsView, &MyGraphicsView::handleCoordinateInput);
+    connect(ui->graphicsView, &MyGraphicsView::createPolygonSignal, this, &MainWindow::createPolygonMsh);
+
+
     connect(generateMshAction, &QAction::triggered, this, &MainWindow::generateMsh);
     connect(addForceAction, &QAction::triggered, this, &MainWindow::addForces);
     connect(addEdgeAction, &QAction::triggered, this,&MainWindow::addEdges);
@@ -138,6 +148,41 @@ void MainWindow::addGraphics()
     connect(dialog, &DialogAddGraphics::sendRectSignal, this, &MainWindow::paintRect);
     connect(dialog, &DialogAddGraphics::sendCircleSignal, this, &MainWindow::paintCircle);
 }
+void MainWindow::addPolygon()
+{
+    if (ui->lcValue->text().isEmpty()) {
+        QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
+        return; // 退出当前函数
+    }
+    double lc = ui->lcValue->text().toDouble();
+    mshInfo.lc = lc;
+    ui->graphicsView->setMode(QString("CREATELINE"));
+    ui->myStackedWidget->setMode(QString("START"));
+    ui->startInput->setFocus();
+}
+
+void MainWindow::textEntered()//输入xy值
+{
+    QString text = ui->startInput->text();
+    ui->startInput->clear();
+    emit sendTextToGraphicViewSignal(text);
+}
+
+void MainWindow::createPolygonMsh(QVector<QPointF> points)
+{
+    vector<Coordinate> newPoints;
+    for (QPointF point : points) {
+        double x = point.x();
+        double y = point.y();
+        Coordinate coordinate;
+        coordinate.x = x;
+        coordinate.y = y;
+        newPoints.push_back(coordinate);
+    }
+    ui->myStackedWidget->setMode(QString("INIT"));
+    Controller::addPolygonToMsh(newPoints);
+}
+
 //绘图区绘制四边形
 void MainWindow::paintRect(Rect rect)
 {
@@ -274,19 +319,21 @@ void MainWindow::render()//渲染
     for (MechanicBehavior info: mshInfo.mechanicBehaviors) {
         double stressValue = info.equalStress; // 这里获取当前三角形网格的应力值
         double normalizedStress = (stressValue - min) / (max - min);
-        int red=0;
-        int green=0;
-        int blue=0;
-        if(normalizedStress<=0.5){
-            red = 255;
-            green = 510*normalizedStress;
-            blue=255-green;
-        }else{
-            red = 510 * (1-normalizedStress);
-            green = 255;
-            blue=510 * (normalizedStress - 0.5);
+        double factor = 0.5; // 可以调整这个因子来改变颜色的深浅
+        int red = 0;
+        int green = 0;
+        int blue = 0;
+        if (normalizedStress <= 0.5) {
+            green = static_cast<int>(255 * (1 - normalizedStress * 2));
+            red = static_cast<int>(255 * (1 - factor * (1 - normalizedStress * 2)));
+            blue = 0;
         }
-        QColor color(255-red, 255-green, 255-blue);
+        else {
+            green = static_cast<int>(255 * (1 - factor * ((normalizedStress - 0.5) * 2)));
+            red = 255;
+            blue = 0;
+        }
+        QColor color(red, green, blue);
         QBrush brush;
         brush.setStyle(Qt::SolidPattern);
         brush.setColor(color);
@@ -375,3 +422,4 @@ void MainWindow::updateProgressBar(int value)
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(value);
 }
+

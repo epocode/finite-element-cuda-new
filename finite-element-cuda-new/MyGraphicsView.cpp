@@ -13,6 +13,13 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     this->pen.setWidthF(pen.widthF() / this->transform().m11());
     myScene = new QGraphicsScene;
     this->setScene(myScene);
+    this->scale(1, -1);
+    //显示坐标值
+    coordinateLabel = new QLabel(this);
+    coordinateLabel->move(0, 0); // 放置在左上角
+    coordinateLabel->setText("X: 0, Y: 0");
+    coordinateLabel->setStyleSheet("QLabel { color : black; }");
+    coordinateLabel->setFixedSize(100, 30);
 }
 
 void MyGraphicsView::wheelEvent(QWheelEvent* event) {
@@ -30,6 +37,8 @@ void MyGraphicsView::wheelEvent(QWheelEvent* event) {
     // 如果不需要默认的滚动行为，则不调用基类的 wheelEvent
     // QGraphicsView::wheelEvent(event);
 }
+
+
 
 
 
@@ -57,6 +66,8 @@ void MyGraphicsView::mousePressEvent(QMouseEvent* event)
                     // 绘制最后一条线段闭合多边形
                     myScene->addLine(QLineF(points.last(), points.first()), this->pen);
                     setMode(COMMON);
+                    emit createPolygonSignal(points);
+                    points.clear();
                 }
                 else {
                     points.append(point);
@@ -68,8 +79,48 @@ void MyGraphicsView::mousePressEvent(QMouseEvent* event)
         break;
     }
 }
+
+void MyGraphicsView::handleCoordinateInput(QString text)
+{
+    QStringList list = text.split(" ");
+    bool okX, okY;
+    double x = list.at(0).toDouble(&okX);
+    double y = list.at(1).toDouble(&okY);
+    if (okX && okY) {
+        QPointF point(x, y);
+        if (points.size() <= 2) {
+            points.append(point);
+            myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
+            if (points.size() > 1) {//绘制线段
+                myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
+            }
+        }
+        else {
+            if (isCloseToFirstPoint(point)) {
+                // 绘制最后一条线段闭合多边形
+                myScene->addLine(QLineF(points.last(), points.first()), this->pen);
+                setMode(COMMON);
+                emit createPolygonSignal(points);
+                points.clear();
+            }
+            else {
+                points.append(point);
+                myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
+                myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
+            }
+        }
+    }
+    else {
+        return;
+    }
+}
+
 void MyGraphicsView::mouseMoveEvent(QMouseEvent* event)
 {
+    QPointF point = mapToScene(event->pos());
+    // 更新坐标显示标签
+    coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
+    QGraphicsView::mouseMoveEvent(event); // 调用基类的方法
     switch (curMode) {
     case COMMON:
         if (event->buttons() & Qt::LeftButton) {
@@ -121,15 +172,22 @@ void MyGraphicsView::mouseDoubleClickEvent(QMouseEvent* event)
 
 
 
+
+
 void MyGraphicsView::setMode(Mode mode) {
     this->curMode = mode;
 }
 
-bool MyGraphicsView::isPolygonClosed(QPointF p1, QPointF p2)
+void MyGraphicsView::setMode(QString mode)
 {
-    const double threshold = 0.1; // 定义一个阈值
-    return (p1 - p2).manhattanLength() < threshold;
+    if (mode == QString("COMMON")) {
+        setMode(COMMON);
+    }
+    else if (mode == QString("CREATELINE")) {
+        setMode(CREATELINE);
+    }
 }
+
 
 bool MyGraphicsView::isCloseToFirstPoint(const QPointF& mousePos)
 {

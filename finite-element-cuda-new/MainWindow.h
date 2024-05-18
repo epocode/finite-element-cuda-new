@@ -35,10 +35,11 @@ private:
 signals:
     void updateProgressBarSignal(int value);
     void enableRenderActionSignal(bool enable);
-
+    void sendTextToGraphicViewSignal(const QString& text);
 private slots:
     void clear();
     void addGraphics();
+    void addPolygon();
     void paintRect(Rect rect);
     void paintCircle(Circle circle);
     void generateMsh();
@@ -55,6 +56,8 @@ private slots:
     void activateCalc();
     void setRenderEnable(bool enable);
     void updateProgressBar(int value);
+    void textEntered();
+    void createPolygonMsh(QVector<QPointF> points);
 };
 
 

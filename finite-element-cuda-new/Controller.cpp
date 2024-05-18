@@ -15,9 +15,16 @@ void Controller::addRectToMsh(double x, double y, double width, double height)
 	mshInfo.addRect(x, y, width, height);
 }
 
+
+
 void Controller::addCircleToMsh(double x, double y, double radius)
 {
 	mshInfo.addCircle(x, y, radius);
+}
+
+void Controller::addPolygonToMsh(vector<Coordinate> points)
+{
+	mshInfo.addPolygon(points);
 }
 
 void Controller::generateMsh()

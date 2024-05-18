@@ -11,8 +11,8 @@ struct Circle{
 };
 
 struct Coordinate{
-    int x;
-    int y;
+    double x;
+    double y;
 };
 
 struct Force {

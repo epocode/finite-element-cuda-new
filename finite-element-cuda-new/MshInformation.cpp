@@ -38,7 +38,6 @@ bool MshInformation::initTagMap() {
         tempSet.insert(this->nodeTagsForTriangle[this->triangleIndex][i * 3 + 1]);
         tempSet.insert(this->nodeTagsForTriangle[this->triangleIndex][i * 3 + 2]);
     }
-    // qDebug() << "the len of tempSet is " << tempSet.size();
     for (int i = 0; i < this->nodeTags.size(); i++) {
         if (tempSet.find(this->nodeTags[i]) == tempSet.end()) {
             // qDebug() << "the missing index is" << this->nodeTags[i];
@@ -74,6 +73,7 @@ void MshInformation::initPointAndTriangleInfo(){//将网格中点的获取和三
 void MshInformation::clearAll()
 {
     this->filePath = "";
+    this->curveLoopList.clear();
     this->tagMap.clear();
     this->nodeTags.clear();
     this->coord.clear();
@@ -115,6 +115,24 @@ void MshInformation::addCircle(double x, double y, double radius)
     int circleLeftIndex = gmsh::model::geo::addCircleArc(pointIndexes[0], pointIndexes[1], pointIndexes[2]);
     int circleRightIndex = gmsh::model::geo::addCircleArc(pointIndexes[2], pointIndexes[1], pointIndexes[0]);
     this->curveLoopList.push_back(gmsh::model::geo::addCurveLoop({ circleLeftIndex, circleRightIndex }));
+}
+
+void MshInformation::addPolygon(vector<Coordinate> points)
+{
+    vector<int> pointIndexes;
+    vector<int> lineIndexes;
+    for (int i = 0; i < points.size(); i++) {
+        pointIndexes.push_back(gmsh::model::geo::addPoint(points[i].x, points[i].y, lc));
+        if (i > 0) {
+            int lineTag = gmsh::model::geo::addLine(pointIndexes[i - 1], pointIndexes[i]);
+            lineIndexes.push_back(lineTag);
+        }
+    }
+    int closingLineTag = gmsh::model::geo::addLine(pointIndexes.back(), pointIndexes.front());
+    lineIndexes.push_back(closingLineTag);
+
+    int lineLoopTag = gmsh::model::geo::addCurveLoop(lineIndexes);
+    this->curveLoopList.push_back(lineLoopTag);
 }
 
 void MshInformation::createMsh()

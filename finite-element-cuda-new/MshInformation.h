@@ -55,6 +55,7 @@ public:
     void clearAll();
     void addRect(double x, double y, double width, double height);
     void addCircle(double x, double y, double radius);
+    void addPolygon(vector<Coordinate> points);
     void createMsh();
     void saveMsh();
     bool loadMsh();

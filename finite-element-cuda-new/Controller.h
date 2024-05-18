@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
-
+#include <vector>
+#include <publicElement.h>
 class Controller  : public QObject
 {
 	Q_OBJECT
@@ -12,6 +13,7 @@ public:
 	//定义静态方法用于处理请求
 	static void addRectToMsh(double x, double y, double width, double height);
 	static void addCircleToMsh(double x, double y, double radius);
+	static void addPolygonToMsh(vector<Coordinate> points);
 	static void generateMsh();
 	static void saveMsh();
 	static bool loadMsh();
@@ -21,5 +23,4 @@ public:
 	static void saveConstraint();
 	static void loadConstraint();
 	static void generateMatrixes(double E, double v, double t);
-	
 };
