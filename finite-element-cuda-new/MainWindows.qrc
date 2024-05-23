@@ -2,6 +2,9 @@
     <qresource prefix="/MainWindows">
         <file>title.png</file>
         <file>ManjaroMix.qss</file>
+        <file>circle.png</file>
+        <file>rect.png</file>
+        <file>connect-line.png</file>
     </qresource>
     <qresource prefix="/">
         <file>ManjaroMix.qss</file>

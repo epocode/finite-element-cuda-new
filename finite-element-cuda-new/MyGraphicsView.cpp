@@ -1,10 +1,12 @@
-#include "MyGraphicsView.h"
+ï»¿#include "MyGraphicsView.h"
 #include <QScrollBar>
 #include <QMouseEvent>
+#include <QGraphicsRectItem>
+#include <QString>
 MyGraphicsView::MyGraphicsView(QWidget* parent)
     : QGraphicsView(parent) {
     setMode(COMMON);
-    // ³õÊ¼»¯´úÂë
+    // åˆå§‹åŒ–ä»£ç 
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setMouseTracking(true);
     setupDragMode();
@@ -14,36 +16,119 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     myScene = new QGraphicsScene;
     this->setScene(myScene);
     this->scale(1, -1);
-    //ÏÔÊ¾×ø±êÖµ
+    //æ˜¾ç¤ºåæ ‡å€¼
     coordinateLabel = new QLabel(this);
-    coordinateLabel->move(0, 0); // ·ÅÖÃÔÚ×óÉÏ½Ç
+    coordinateLabel->move(0, 0); // æ”¾ç½®åœ¨å·¦ä¸Šè§’
     coordinateLabel->setText("X: 0, Y: 0");
     coordinateLabel->setStyleSheet("QLabel { color : black; }");
     coordinateLabel->setFixedSize(100, 30);
+
+    isDrawing = false;
 }
 
 void MyGraphicsView::wheelEvent(QWheelEvent* event) {
-    const double scaleFactor = 1.15; // Ëõ·ÅµÄ±ÈÀıÒò×Ó
+    const double scaleFactor = 1.15; // ç¼©æ”¾çš„æ¯”ä¾‹å› å­
     QPoint scrollAmount = event->angleDelta();
     if (scrollAmount.y() > 0) {
-        // ÏòÉÏ¹ö¶¯Êó±ê¹öÂÖ£¬·Å´ó
+        // å‘ä¸Šæ»šåŠ¨é¼ æ ‡æ»šè½®ï¼Œæ”¾å¤§
         scale(scaleFactor, scaleFactor);
     }
     else {
-        // ÏòÏÂ¹ö¶¯Êó±ê¹öÂÖ£¬ËõĞ¡
+        // å‘ä¸‹æ»šåŠ¨é¼ æ ‡æ»šè½®ï¼Œç¼©å°
         scale(1.0 / scaleFactor, 1.0 / scaleFactor);
     }
-
-    // Èç¹û²»ĞèÒªÄ¬ÈÏµÄ¹ö¶¯ĞĞÎª£¬Ôò²»µ÷ÓÃ»ùÀàµÄ wheelEvent
-    // QGraphicsView::wheelEvent(event);
 }
 
 
 
+void MyGraphicsView::handleCoordinateInput(QString text)
+{
+    QStringList list = text.split(" ");
+    double x = list.at(0).toDouble();
+    double y = list.at(1).toDouble();
+    QPointF point(x, y);
+    switch (curMode) {
+    case CREATELINE: 
+        if (points.size() <= 2) {
+            points.append(point);
+            myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
+            emit setTipsSignal(QString("è®¾ç½®ä¸‹ä¸€ä¸ªç‚¹çš„åæ ‡ x y:"));
+            if (points.size() > 1) {//ç»˜åˆ¶çº¿æ®µ
+                myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
+            }
+        }
+        else {
+            if (isCloseToFirstPoint(point)) {
+                // ç»˜åˆ¶æœ€åä¸€æ¡çº¿æ®µé—­åˆå¤šè¾¹å½¢
+                myScene->addLine(QLineF(points.last(), points.first()), this->pen);
+                setMode(COMMON);
+                emit createPolygonSignal(points);
+                points.clear();
+                tempLine = nullptr;
+            }
+            else {
+                points.append(point);
+                myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
+                myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
+            }
+        }
+    
+        break;
+    case CREATERECT:
+        list = text.split(" ");
+        x = list.at(0).toDouble();
+        y = list.at(1).toDouble();
+        point = QPointF(x, y);
+        if (tempRect) {//å®Œæˆäº†åˆ›å»º
+            myScene->removeItem((QGraphicsItem*)(tempRect));
+            delete tempRect;
+            tempRect = myScene->addRect(QRectF(rectStartPoint, point), this->pen);
+            tempRect = nullptr;
+            isDrawing = false;
+            setMode(COMMON);
+            emit createRectSignal(rectStartPoint, point);
+            emit resetInputAreaSignal();
+        }
+        else {
+            isDrawing = true;
+            rectStartPoint = point;
+            emit setTipsSignal(QString("è®¾ç½®å¯¹é¡¶è§’é¡¶ç‚¹åæ ‡ x y:"));
+        }
+        break;
+    case CREATECIRCLE: 
+        list = text.split(" ");
+        x = list.at(0).toDouble();
+        y = list.at(1).toDouble();
+        point = QPointF(x, y);
+        if (!isDrawing) {
+            startPoint = point;
+            isDrawing = true;
+            emit setTipsSignal(QString("è®¾ç½®ç»ˆç‚¹åæ ‡ x y:"));
+        }
+        else {
+            QPointF endPoint = point;
+            qreal radius = QLineF(startPoint, endPoint).length();
+            if (tempEllipse) {
+                myScene->removeItem((QGraphicsItem*)tempEllipse);
+                delete tempEllipse;
+                myScene->addEllipse(startPoint.x() - radius, startPoint.y() - radius, 2 * radius, 2 * radius, this->pen);
+            }
+            else {
+                tempEllipse = myScene->addEllipse(startPoint.x() - radius, startPoint.y() - radius, 2 * radius, 2 * radius, this->pen);
+            }
+            isDrawing = false;
+            tempEllipse = nullptr;
+            emit createCircleSignal(startPoint.x(), startPoint.y(), radius);
+            emit resetInputAreaSignal();
+        }
+        break;
+    }
+}
 
 
 void MyGraphicsView::mousePressEvent(QMouseEvent* event)
 {
+    QPointF point = mapToScene(event->pos());
     switch (curMode) {
     case COMMON:
         if (event->button() == Qt::LeftButton) {
@@ -52,75 +137,93 @@ void MyGraphicsView::mousePressEvent(QMouseEvent* event)
         QGraphicsView::mousePressEvent(event);
         break;
     case CREATELINE:
-        QPointF point = mapToScene(event->pos());
         if (event->button() == Qt::MouseButton::LeftButton) {
             if (points.size() <= 2) {
                 points.append(point);
-                myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
-                if (points.size() > 1) {//»æÖÆÏß¶Î
-                    myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
+                ellipseItemList.push_back(myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen));
+                if (points.size() > 1) {//ç»˜åˆ¶çº¿æ®µ
+                    lineItems.push_back(myScene->addLine(QLineF(points[points.size() - 2], point), this->pen));
                 }
+                QString msg = QString("è®¾ç½®ä¸‹ä¸€ä¸ªç‚¹çš„åæ ‡ x y : ");
+                emit setTipsSignal(msg);
             }
             else {
                 if (isCloseToFirstPoint(point)) {
-                    // »æÖÆ×îºóÒ»ÌõÏß¶Î±ÕºÏ¶à±ßĞÎ
-                    myScene->addLine(QLineF(points.last(), points.first()), this->pen);
+                    // ç»˜åˆ¶æœ€åä¸€æ¡çº¿æ®µé—­åˆå¤šè¾¹å½¢
+                    lineItems.push_back(myScene->addLine(QLineF(points.last(), points.first()), this->pen));
                     setMode(COMMON);
                     emit createPolygonSignal(points);
+                    emit resetInputAreaSignal();
                     points.clear();
+                    lineItems.clear();
+                    ellipseItemList.clear();
                 }
                 else {
                     points.append(point);
-                    myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
-                    myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
+                    ellipseItemList.push_back(myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen));
+                    lineItems.push_back(myScene->addLine(QLineF(points[points.size() - 2], point), this->pen));
                 }
+            }
+        }
+        break;
+    case CREATERECT:
+        if (event->button() == Qt::LeftButton) {
+            if (tempRect) {//å®Œæˆäº†åˆ›å»º
+                myScene->removeItem((QGraphicsItem*)(tempRect));
+                delete tempRect;
+                tempRect = myScene->addRect(QRectF(rectStartPoint, point), this->pen);
+                tempRect = nullptr;
+                isDrawing = false;
+                setMode(COMMON);
+                emit createRectSignal(rectStartPoint, point);
+                emit resetInputAreaSignal();
+            }
+            else {
+                isDrawing = true;
+                rectStartPoint = point;
+                // åˆ›å»ºä¸€ä¸ªä¸´æ—¶çš„çŸ©å½¢æ¥æ˜¾ç¤ºé¢„åˆ›å»ºçš„å½¢çŠ¶
+                tempRect = myScene->addRect(QRectF(rectStartPoint, point), this->pen);
+                emit setTipsSignal(QString("è®¾ç½®å¯¹é¡¶è§’é¡¶ç‚¹åæ ‡ x y:"));
+            }
+        }
+        break;
+    case CREATECIRCLE:
+        if (event->button() == Qt::LeftButton) {
+            if (!isDrawing) {
+                startPoint = mapToScene(event->pos());
+                isDrawing = true;
+                emit setTipsSignal(QString("è®¾ç½®ç»ˆç‚¹åæ ‡ x y:"));
+            }
+            else {
+                QPointF endPoint = mapToScene(event->pos());
+                qreal radius = QLineF(startPoint, endPoint).length();
+                if (tempEllipse) {
+                    myScene->removeItem((QGraphicsItem*)tempEllipse);
+                    delete tempEllipse;
+                    myScene->addEllipse(startPoint.x() - radius, startPoint.y() - radius, 2 * radius, 2 * radius, this->pen);
+                }
+                else {
+                    tempEllipse = myScene->addEllipse(startPoint.x() - radius, startPoint.y() - radius, 2 * radius, 2 * radius, this->pen);
+                }
+                isDrawing = false;
+                tempEllipse = nullptr;
+                emit createCircleSignal(startPoint.x(), startPoint.y(), radius);
+                emit resetInputAreaSignal();
+                setMode(COMMON);
             }
         }
         break;
     }
 }
 
-void MyGraphicsView::handleCoordinateInput(QString text)
-{
-    QStringList list = text.split(" ");
-    bool okX, okY;
-    double x = list.at(0).toDouble(&okX);
-    double y = list.at(1).toDouble(&okY);
-    if (okX && okY) {
-        QPointF point(x, y);
-        if (points.size() <= 2) {
-            points.append(point);
-            myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
-            if (points.size() > 1) {//»æÖÆÏß¶Î
-                myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
-            }
-        }
-        else {
-            if (isCloseToFirstPoint(point)) {
-                // »æÖÆ×îºóÒ»ÌõÏß¶Î±ÕºÏ¶à±ßĞÎ
-                myScene->addLine(QLineF(points.last(), points.first()), this->pen);
-                setMode(COMMON);
-                emit createPolygonSignal(points);
-                points.clear();
-            }
-            else {
-                points.append(point);
-                myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
-                myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
-            }
-        }
-    }
-    else {
-        return;
-    }
-}
+
 
 void MyGraphicsView::mouseMoveEvent(QMouseEvent* event)
 {
     QPointF point = mapToScene(event->pos());
-    // ¸üĞÂ×ø±êÏÔÊ¾±êÇ©
+    // æ›´æ–°åæ ‡æ˜¾ç¤ºæ ‡ç­¾
     coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
-    QGraphicsView::mouseMoveEvent(event); // µ÷ÓÃ»ùÀàµÄ·½·¨
+    //QGraphicsView::mouseMoveEvent(event); // è°ƒç”¨åŸºç±»çš„æ–¹æ³•
     switch (curMode) {
     case COMMON:
         if (event->buttons() & Qt::LeftButton) {
@@ -135,7 +238,7 @@ void MyGraphicsView::mouseMoveEvent(QMouseEvent* event)
             QPointF point = mapToScene(event->pos());
             bool found = isCloseToFirstPoint(point);
             if (found) {
-                // Èç¹ûÕÒµ½ÁËÒ»¸ö½Ó½üµÄµã£¬Îü¸½
+                // ä¸é¦–ä¸ªç‚¹è¿æ¥ä¸Šå
                 if (tempLine) {
                     myScene->removeItem((QGraphicsItem*)(tempLine));
                     delete tempLine;
@@ -151,11 +254,40 @@ void MyGraphicsView::mouseMoveEvent(QMouseEvent* event)
             }
 
         }
+        break;
+    case CREATERECT: 
+        if (isDrawing) {
+            if (tempRect) {//å®Œæˆäº†åˆ›å»º
+                myScene->removeItem((QGraphicsItem*)(tempRect));
+                delete tempRect;
+                tempRect = myScene->addRect(QRectF(rectStartPoint, point), this->pen);
+
+            }
+            else {
+                tempRect = new QGraphicsRectItem(QRectF(rectStartPoint, point));
+                tempRect = myScene->addRect(QRectF(rectStartPoint, point), this->pen);
+            }
+        }
+        break;
+    case CREATECIRCLE:
+        if (isDrawing) {
+            QPointF endPoint = mapToScene(event->pos());
+            qreal radius = QLineF(startPoint, endPoint).length();
+            if (tempEllipse) {
+                myScene->removeItem((QGraphicsItem*)tempEllipse);
+                delete tempEllipse;
+                tempEllipse = myScene->addEllipse(startPoint.x() - radius, startPoint.y() - radius, 2 * radius, 2 * radius, this->pen);
+            }
+            else {
+                tempEllipse = myScene->addEllipse(startPoint.x() - radius, startPoint.y() - radius, 2 * radius, 2 * radius, this->pen);
+            }
+        }
+        break;
     }
-    
 }
 
-void MyGraphicsView::mouseReleaseEvent(QMouseEvent* event)
+
+    void MyGraphicsView::mouseReleaseEvent(QMouseEvent * event)
 {
     QGraphicsView::mouseReleaseEvent(event);
 }
@@ -167,7 +299,7 @@ void MyGraphicsView::setupDragMode()
 void MyGraphicsView::mouseDoubleClickEvent(QMouseEvent* event)
 {
     QPointF scenePoint = mapToScene(event->pos());
-    emit doubleClicked(scenePoint); // ·¢ËÍĞÅºÅ
+    emit doubleClicked(scenePoint); // å‘é€ä¿¡å·
 }
 
 
@@ -186,12 +318,19 @@ void MyGraphicsView::setMode(QString mode)
     else if (mode == QString("CREATELINE")) {
         setMode(CREATELINE);
     }
+    else if (mode == QString("CREATERECT")) {
+        setMode(CREATERECT);
+    }
+    else if (mode == QString("CREATECIRCLE")) {
+        setMode(CREATECIRCLE);
+    }
 }
+
 
 
 bool MyGraphicsView::isCloseToFirstPoint(const QPointF& mousePos)
 {
-    const double snapDistance = 1; // Îü¸½¾àÀëãĞÖµ
+    const double snapDistance = 1; // å¸é™„è·ç¦»é˜ˆå€¼
     QPointF point = points.first();
     double distance = std::hypot(mousePos.x() - point.x(), mousePos.y() - point.y());
     if (distance < snapDistance) {
@@ -199,4 +338,72 @@ bool MyGraphicsView::isCloseToFirstPoint(const QPointF& mousePos)
     }
 
     return false;
+}
+
+void MyGraphicsView::keyPressEvent(QKeyEvent* event) {
+    if (event->key() == Qt::Key_Escape) {
+        switch (curMode) {
+        case CREATELINE:
+            if (points.size() == 0) {
+                setMode(COMMON);
+                emit resetInputAreaSignal();
+                tempLine = nullptr;
+            }
+            if (points.size() == 1) {
+                if (tempLine) {
+                    myScene->removeItem((QGraphicsItem*)tempLine);
+                    delete tempLine;
+                }
+                points.removeLast();
+                QGraphicsEllipseItem* ellipseItem = ellipseItemList.last();
+                ellipseItemList.removeLast();
+                myScene->removeItem((QGraphicsItem*)ellipseItem);
+                delete ellipseItem;
+                setMode(COMMON);
+                emit resetInputAreaSignal();
+                tempLine = nullptr;
+            }
+            else {
+                if (tempLine) {
+                    myScene->removeItem((QGraphicsItem*)tempLine);
+                    delete tempLine;
+                }
+                tempLine = lineItems.last();
+                lineItems.removeLast();
+                myScene->removeItem((QGraphicsItem*)tempLine);
+                delete tempLine;
+                QGraphicsEllipseItem* ellipseItem = ellipseItemList.last();
+                ellipseItemList.removeLast();
+                myScene->removeItem((QGraphicsItem*)ellipseItem);
+                delete ellipseItem;
+                points.removeLast();
+                tempLine = nullptr;
+            }
+            break;
+        case CREATERECT:
+            if (tempRect) {//å®Œæˆäº†åˆ›å»º
+                myScene->removeItem((QGraphicsItem*)(tempRect));
+                delete tempRect;
+            }
+            tempRect = nullptr;
+            isDrawing = false;
+            setMode(COMMON);
+            emit resetInputAreaSignal();
+            break;
+        case CREATECIRCLE:
+            if (tempEllipse) {
+                myScene->removeItem((QGraphicsItem*)tempEllipse);
+                delete tempEllipse;
+            }
+            tempEllipse = nullptr;
+            isDrawing = false;
+            emit resetInputAreaSignal();
+            setMode(COMMON);
+            break;
+        }
+    }
+    else {
+        // å¦‚æœæŒ‰ä¸‹çš„ä¸æ˜¯ ESC é”®ï¼Œåˆ™è°ƒç”¨åŸºç±»çš„æ–¹æ³•å¤„ç†è¯¥äº‹ä»¶
+        QGraphicsView::keyPressEvent(event);
+    }
 }

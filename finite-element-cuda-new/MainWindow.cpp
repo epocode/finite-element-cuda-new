@@ -29,6 +29,7 @@
 #include <QJsonDocument>
 #include <QFile>
 #include "Controller.h"
+#include <QToolBar>
 
 extern MshInformation mshInfo;
 
@@ -74,7 +75,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     QMenu *graphicsMenu = this->menuBar()->addMenu(tr("图形"));
     QAction *addFixedGraphicsAction = graphicsMenu->addAction(tr("添加固定图形"));
-    QAction* addPolygonAction = graphicsMenu->addAction(tr("添加多边形"));
 
 
     QAction *generateMshAction = this->menuBar()->addAction(tr("生成网格"));
@@ -89,9 +89,31 @@ MainWindow::MainWindow(QWidget *parent)
     renderAction->setEnabled(false);
     calcAction->setEnabled(false);
 
+
+    //工具栏
+    QToolBar* toolBar = addToolBar(tr("图形创建"));
+    addToolBar(Qt::RightToolBarArea, toolBar);
+    QAction* addPolygonAction = new QAction(this);
+    addPolygonAction->setIcon(QIcon(":/MainWindows/connect-line.png"));
+    QAction* addRectAction = new QAction(this);
+    addRectAction->setIcon(QIcon(":/MainWindows/rect.png"));
+    QAction* addCircleAction = new QAction(this);
+    addCircleAction->setIcon(QIcon(":/MainWindows/circle.png"));
+    toolBar->addAction(addPolygonAction);
+    toolBar->addAction(addRectAction);
+    toolBar->addAction(addCircleAction);
+    connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
+    connect(addRectAction, &QAction::triggered, this, &MainWindow::addRect);
+    connect(addCircleAction, &QAction::triggered, this, &MainWindow::addCircle);
+    connect(ui->graphicsView, &MyGraphicsView::createPolygonSignal, this, &MainWindow::createPolygonMsh);
+    connect(ui->graphicsView, &MyGraphicsView::createRectSignal, this, &MainWindow::createRectMsh);
+    connect(ui->graphicsView, &MyGraphicsView::createCircleSignal, this, &MainWindow::createCircleToMsh);
+    connect(ui->graphicsView, &MyGraphicsView::resetInputAreaSignal, this, &MainWindow::resetInputArea);
+    connect(ui->startInput, &QLineEdit::returnPressed, this, &MainWindow::textEntered);
+    connect(this, &MainWindow::sendTextToGraphicViewSignal, ui->graphicsView, &MyGraphicsView::handleCoordinateInput);
+    connect(ui->graphicsView, &MyGraphicsView::setTipsSignal, this, &MainWindow::setTips);
     //绘图区   
     this->pen.setWidthF(pen.widthF() / ui->graphicsView->transform().m11());
-    //处理绘图区的鼠标操作
     connect(ui->graphicsView, &MyGraphicsView::doubleClicked, this, &MainWindow::handleDoubleClick);
     //初始化输入框的内容
     ui->lineEditE->setText(QString::number(18000000000, 'e', 2));
@@ -103,12 +125,6 @@ MainWindow::MainWindow(QWidget *parent)
     //链接槽函数
     connect(redoAction, &QAction::triggered, this, &MainWindow::clear);
     connect(addFixedGraphicsAction, &QAction::triggered, this, &MainWindow::addGraphics);
-    connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
-    connect(ui->startInput, &QLineEdit::returnPressed, this, &MainWindow::textEntered);
-    connect(this, &MainWindow::sendTextToGraphicViewSignal, ui->graphicsView, &MyGraphicsView::handleCoordinateInput);
-    connect(ui->graphicsView, &MyGraphicsView::createPolygonSignal, this, &MainWindow::createPolygonMsh);
-
-
     connect(generateMshAction, &QAction::triggered, this, &MainWindow::generateMsh);
     connect(addForceAction, &QAction::triggered, this, &MainWindow::addForces);
     connect(addEdgeAction, &QAction::triggered, this,&MainWindow::addEdges);
@@ -120,6 +136,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(openConstraintAction, &QAction::triggered, this,&MainWindow::openConstraint);
     connect(this, &MainWindow::updateProgressBarSignal, this, &MainWindow::updateProgressBar);
     connect(this, &MainWindow::enableRenderActionSignal, this, &MainWindow::setRenderEnable);
+    
     
     MyStackedWidget* widget = ui->myStackedWidget;
     widget->setCurrentIndex(0);
@@ -139,18 +156,30 @@ void MainWindow::addGraphics()
     }
     double lc = ui->lcValue->text().toDouble();
     mshInfo.lc = lc;
-    DialogAddGraphics* dialog = new DialogAddGraphics(nullptr, lc);
+
+/*    DialogAddGraphics* dialog = new DialogAddGraphics(nullptr, lc);
     dialog->setLayout(this->layout());
     dialog->setWindowTitle("添加图形");
     QPoint cursorPos = QCursor::pos();
     dialog->move(cursorPos);
     dialog->show();
     connect(dialog, &DialogAddGraphics::sendRectSignal, this, &MainWindow::paintRect);
-    connect(dialog, &DialogAddGraphics::sendCircleSignal, this, &MainWindow::paintCircle);
+    connect(dialog, &DialogAddGraphics::sendCircleSignal, this, &MainWindow::paintCircle);*/
 }
-void MainWindow::addPolygon()
+
+bool MainWindow::isLcFilled()
 {
     if (ui->lcValue->text().isEmpty()) {
+        return false; 
+    }
+    return true;
+}
+
+
+
+void MainWindow::addPolygon()
+{
+    if (!isLcFilled()) {
         QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
         return; // 退出当前函数
     }
@@ -159,14 +188,38 @@ void MainWindow::addPolygon()
     ui->graphicsView->setMode(QString("CREATELINE"));
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
+    setTips(QString("输入第一个点的坐标x y:"));
 }
 
-void MainWindow::textEntered()//输入xy值
+void MainWindow::addRect()
 {
-    QString text = ui->startInput->text();
-    ui->startInput->clear();
-    emit sendTextToGraphicViewSignal(text);
+    if (!isLcFilled()) {
+        QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
+        return; // 退出当前函数
+    }
+    double lc = ui->lcValue->text().toDouble();
+    mshInfo.lc = lc;
+    ui->graphicsView->setMode(QString("CREATERECT"));
+    ui->myStackedWidget->setMode(QString("START"));
+    ui->startInput->setFocus();
+    setTips(QString("输入第一个点的坐标x y:"));
 }
+
+void MainWindow::addCircle()
+{
+    if (!isLcFilled()) {
+        QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
+        return; // 退出当前函数
+    }
+    double lc = ui->lcValue->text().toDouble();
+    mshInfo.lc = lc;
+    ui->graphicsView->setMode(QString("CREATECIRCLE"));
+    ui->myStackedWidget->setMode(QString("START"));
+    ui->startInput->setFocus();
+    setTips(QString("输入圆心的坐标x y:"));
+}
+
+
 
 void MainWindow::createPolygonMsh(QVector<QPointF> points)
 {
@@ -181,6 +234,37 @@ void MainWindow::createPolygonMsh(QVector<QPointF> points)
     }
     ui->myStackedWidget->setMode(QString("INIT"));
     Controller::addPolygonToMsh(newPoints);
+}
+
+void MainWindow::createRectMsh(QPointF startPoint, QPointF endPoint)
+{
+    double x = startPoint.x();
+    double y = startPoint.y();
+    double width = endPoint.x() - x;
+    double height = endPoint.y() - y;
+    Controller::addRectToMsh(x, y, width, height);
+}
+
+void MainWindow::createCircleToMsh(double x, double y, double radius)
+{
+    Controller::addCircleToMsh(x, y, radius);
+}
+
+void MainWindow::textEntered()//输入xy值
+{
+    QString text = ui->startInput->text();
+    ui->startInput->clear();
+    emit sendTextToGraphicViewSignal(text);
+}
+void MainWindow::resetInputArea()
+{
+    ui->myStackedWidget->setMode(QString("INIT"));
+}
+
+void MainWindow::setTips(const QString &msg)
+{
+    QString test = QString("这是段测试代码");
+    ui->tipsLabel->setText(msg);
 }
 
 //绘图区绘制四边形
@@ -407,7 +491,7 @@ void MainWindow::handleDoubleClick(QPointF  point)//点击网格中的点，然�
 
 }
 
-void MainWindow::activateCalc()
+void MainWindow::activateCalc() 
 {
     this->calcAction->setEnabled(true);
 }

@@ -39,9 +39,23 @@ signals:
 private slots:
     void clear();
     void addGraphics();
+    bool isLcFilled();
     void addPolygon();
+    void addRect();
+    void addCircle();
+    void createPolygonMsh(QVector<QPointF> points);
+    void createRectMsh(QPointF startPoint, QPointF endPoint);
+    void createCircleToMsh(double x, double y, double radius);
+
+    void textEntered();
+    void resetInputArea();
+    void setTips(const QString &msg);
+
     void paintRect(Rect rect);
     void paintCircle(Circle circle);
+
+
+
     void generateMsh();
     void paintMsh();
     void addForces();
@@ -56,8 +70,7 @@ private slots:
     void activateCalc();
     void setRenderEnable(bool enable);
     void updateProgressBar(int value);
-    void textEntered();
-    void createPolygonMsh(QVector<QPointF> points);
+
 };
 
 
