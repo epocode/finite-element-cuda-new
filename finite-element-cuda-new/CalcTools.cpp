@@ -203,12 +203,60 @@ namespace CalcTools {
 
     void handleEdge()
     {
-        for (EdgeInfo edgeInfo : mshInfo.edgeInfos) {
+        for (EdgeInfo &edgeInfo : mshInfo.edgeInfos) {
             double x = edgeInfo.x;
             double y = edgeInfo.y;
             bool xFixed = edgeInfo.xFixed;
             bool yFixed = edgeInfo.yFixed;
-            for (const auto& pair : mshInfo.tagMap) {
+            for (int j = 0; j < mshInfo.elementTags[mshInfo.triangleIndex].size(); j++) {
+                Point p1, p2, p3, o;
+                int index1, index2, index3;
+                index1 = mshInfo.tagMap[mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex][j * 3 + 0]];
+                index2 = mshInfo.tagMap[mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex][j * 3 + 1]];
+                index3 = mshInfo.tagMap[mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex][j * 3 + 2]];
+                p1.x = mshInfo.xList[index1];
+                p1.y = mshInfo.yList[index1];
+                p2.x = mshInfo.xList[index2];
+                p2.y = mshInfo.yList[index2];
+                p3.x = mshInfo.xList[index3];
+                p3.y = mshInfo.yList[index3];
+                o.x = x;
+                o.y = y;
+                int closestIndex = -1;
+
+                if (isInTriangle(p1, p2, p3, o)) {
+                    closestIndex = pow(mshInfo.xList[index1] - x, 2) + pow(mshInfo.yList[index1] - y, 2) <
+                        pow(mshInfo.xList[index1] - x, 2) + pow(mshInfo.yList[index1] - y, 2) ? index1 : index2;
+                    closestIndex = pow(mshInfo.xList[closestIndex] - x, 2) + pow(mshInfo.yList[closestIndex] - y, 2) <
+                        pow(mshInfo.xList[index3] - x, 2) + pow(mshInfo.yList[index3] - y, 2) ? closestIndex : index3;
+                    if (xFixed) {
+                        mshInfo.fMatrix(closestIndex * 2 + 0, 0) = 0;
+                        mshInfo.kMatrix(closestIndex * 2, closestIndex * 2) = 1;
+                        for (int i = 0; i < mshInfo.kMatrix.rows(); i++) {
+                            if (i == closestIndex * 2) {
+                                continue;
+                            }
+                            mshInfo.kMatrix(i, closestIndex * 2) = 0;
+                            mshInfo.kMatrix(closestIndex * 2, i) = 0;
+                        }
+                    }
+                    if (yFixed) {
+                        mshInfo.fMatrix(closestIndex * 2 + 1, 0) = 0;
+                        mshInfo.kMatrix(closestIndex * 2 + 1, closestIndex * 2 + 1) = 1;
+                        for (int i = 0; i < mshInfo.kMatrix.rows(); i++) {
+                            if (i == closestIndex * 2 + 1) {
+                                continue;
+                            }
+                            mshInfo.kMatrix(i, closestIndex * 2 + 1) = 0;
+                            mshInfo.kMatrix(closestIndex * 2 + 1, i) = 0;
+                        }
+                    }
+                    break;
+                }
+                
+
+            }
+            /*for (const auto& pair : mshInfo.tagMap) {
                 int index = pair.second;
                 if (pow(mshInfo.xList[index] - x, 2) < 1e-4 && pow(mshInfo.yList[index] - y, 2) < 1e-4) {
                     if (xFixed) {
@@ -234,7 +282,7 @@ namespace CalcTools {
                         }
                     }
                 }
-            }
+            }*/
         }
 
     }
