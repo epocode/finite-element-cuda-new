@@ -3,6 +3,10 @@
 #include <QMouseEvent>
 #include <QGraphicsRectItem>
 #include <QString>
+#include "MyGradientLabel.h"
+#include <qgraphicsproxywidget.h>
+#include <QGroupBox>
+#include <QVBoxLayout>
 MyGraphicsView::MyGraphicsView(QWidget* parent)
     : QGraphicsView(parent) {
     setMode(COMMON);
@@ -10,7 +14,6 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setMouseTracking(true);
     setupDragMode();
-    myScene = this->scene();
     this->scale(40, 40);
     this->pen.setWidthF(pen.widthF() / this->transform().m11());
     myScene = new QGraphicsScene;
@@ -24,6 +27,23 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     coordinateLabel->setFixedSize(100, 30);
 
     isDrawing = false;
+    //颜色条添加（旧）
+   /* MyColorBar* colorBar = new MyColorBar(this);
+    this->myScene->addItem(colorBar);*/
+    //添加颜色条
+    gradientBox = new QGroupBox(this);
+    QVBoxLayout* layout= new QVBoxLayout();
+    maxGradientLabel = new QLabel(gradientBox);
+    colorBar = new MyGradientLabel(gradientBox);
+    minGradientLabel = new QLabel(gradientBox);
+    maxGradientLabel->setStyleSheet("color: black;");
+    minGradientLabel->setStyleSheet("color: black;");
+    layout->addWidget(maxGradientLabel);
+    layout->addWidget(colorBar);
+    layout->addWidget(minGradientLabel);
+    gradientBox->setLayout(layout);
+    gradientBox->move(0, 30);
+    gradientBox->hide();
 }
 
 void MyGraphicsView::wheelEvent(QWheelEvent* event) {
@@ -406,4 +426,40 @@ void MyGraphicsView::keyPressEvent(QKeyEvent* event) {
         // 如果按下的不是 ESC 键，则调用基类的方法处理该事件
         QGraphicsView::keyPressEvent(event);
     }
+}
+
+void MyGraphicsView::showRenderInfo(double max, double min)
+{
+    this->maxGradientLabel->setText(QString::number(max, 'e', 2));
+    this->minGradientLabel->setText(QString::number(min, 'e', 2));
+    this->gradientBox->show();
+}
+
+void MyGraphicsView::hideREnderInf()
+{
+    this->gradientBox->hide();
+}
+
+void MyGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
+{
+    //Q_UNUSED(rect);
+
+    //// 计算colorbar的位置和尺寸
+    //qreal colorBarWidth = 20; // colorbar的宽度
+    //qreal colorBarHeight = this->height() - 20; // colorbar的高度，留出一些边距
+    //qreal colorBarX = this->viewport()->width() - colorBarWidth - 10; // colorbar的x坐标，靠近视图的右侧
+    //qreal colorBarY = 10; // colorbar的y坐标，从视图顶部向下10个单位
+
+    //// 创建渐变
+    //QLinearGradient gradient(colorBarX, colorBarY, colorBarX, colorBarY + colorBarHeight);
+    //gradient.setColorAt(0.0, Qt::blue); // 渐变起始颜色
+    //gradient.setColorAt(1.0, Qt::red); // 渐变结束颜色
+
+    //// 设置画笔和画刷
+    //painter->setPen(Qt::NoPen); // 不绘制边框
+    //painter->setBrush(gradient); // 设置渐变画刷
+
+    //// 绘制colorbar
+    //painter->drawRect(QRectF(colorBarX, colorBarY, colorBarWidth, colorBarHeight));
+
 }

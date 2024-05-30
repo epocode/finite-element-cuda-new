@@ -18,7 +18,6 @@
 #include <unordered_set>
 #include <cfloat>
 #include <QFileDialog>
-#include "DialogAddGraphics.h"
 #include "publicElement.h"
 #include <QMessageBox>
 #include "DialogAddForces.h"
@@ -30,6 +29,7 @@
 #include <QFile>
 #include "Controller.h"
 #include <QToolBar>
+#include<QToolButton>
 
 extern MshInformation mshInfo;
 
@@ -44,11 +44,17 @@ MainWindow::MainWindow(QWidget *parent)
     gmsh::initialize();
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(0);
-    this->paintState = true;    //初始化绘图状态
     // 添加状态栏信息
-    permanentLabel = new QLabel("网格数量为：", this);
+    permanentLabel = new QLabel("", this);
+    paramsLabel = new QLabel("", this);
+    lcValueLabel = new QLabel("", this);
     this->statusBar()->addPermanentWidget(permanentLabel);
-
+    this->statusBar()->addPermanentWidget(paramsLabel);
+    this->statusBar()->addPermanentWidget(this->lcValueLabel);
+    //初始化状态栏信息
+    this->setMyStatus(18000000000, 0.25, 1);
+    this->setMyStatus(0, 0);
+    setLcValue(0.5);
     //设置界面标题图标
     this->setWindowTitle("有限元分析软件V1.0");
     this->setWindowIcon(QIcon(":/MainWindows/title.png"));
@@ -66,6 +72,11 @@ MainWindow::MainWindow(QWidget *parent)
     int x = (screenGeometry.width() - width) / 2;
     int y = (screenGeometry.height() - height) / 2;
     this->setGeometry(x, y, width, height);
+    //设置布局
+    ui->splitter->setStretchFactor(7, 3);
+    QList<int> sizes;
+    sizes << 7 << 3;
+    ui->splitter->setSizes(sizes);
     //添加菜单
 
     QMenu *fileMenu = this->menuBar()->addMenu(tr("模型"));
@@ -73,17 +84,10 @@ MainWindow::MainWindow(QWidget *parent)
     QAction *saveAction = fileMenu->addAction(tr("保存"));
     QAction *openAction = fileMenu->addAction(tr("打开"));
 
-    QMenu *graphicsMenu = this->menuBar()->addMenu(tr("图形"));
-    QAction *addFixedGraphicsAction = graphicsMenu->addAction(tr("添加固定图形"));
-
 
     QAction *generateMshAction = this->menuBar()->addAction(tr("生成网格"));
 
-    QMenu *calcMenu = this->menuBar()->addMenu(tr("约束"));
-    QAction *addForceAction = calcMenu->addAction(tr("添加外力"));
-    QAction *addEdgeAction = calcMenu->addAction(tr("添加边界条件"));
-    QAction *saveConstraintAction = calcMenu->addAction(tr("保存约束"));
-    QAction *openConstraintAction = calcMenu->addAction(tr("装载约束"));
+
     calcAction = this->menuBar()->addAction(tr("计算"));
     renderAction = this->menuBar()->addAction(tr("渲染"));
     renderAction->setEnabled(false);
@@ -91,17 +95,38 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     //工具栏
-    QToolBar* toolBar = addToolBar(tr("图形创建"));
-    addToolBar(Qt::RightToolBarArea, toolBar);
+    //图形工具栏
+    graphicToolBar = addToolBar(tr("图形创建"));
+    addToolBar(Qt::LeftToolBarArea, graphicToolBar);
     QAction* addPolygonAction = new QAction(this);
     addPolygonAction->setIcon(QIcon(":/MainWindows/connect-line.png"));
     QAction* addRectAction = new QAction(this);
     addRectAction->setIcon(QIcon(":/MainWindows/rect.png"));
     QAction* addCircleAction = new QAction(this);
     addCircleAction->setIcon(QIcon(":/MainWindows/circle.png"));
-    toolBar->addAction(addPolygonAction);
-    toolBar->addAction(addRectAction);
-    toolBar->addAction(addCircleAction);
+    graphicToolBar->addAction(addPolygonAction);
+    graphicToolBar->addAction(addRectAction);
+    graphicToolBar->addAction(addCircleAction);
+    graphicToolBar->setVisible(false);
+    //属性工具栏
+    attributeToolBar = addToolBar(tr("属性"));
+    addToolBar(Qt::LeftToolBarArea, attributeToolBar);
+
+    //荷载工具栏
+    loadToolBar = addToolBar(tr("荷载"));
+    addToolBar(Qt::LeftToolBarArea, loadToolBar);
+    QAction* addForceAction = new QAction(tr("添加外力"));
+    QAction* addEdgeAction = new QAction(tr("添加边界条件"));
+    QAction* saveConstraintAction = new QAction(tr("保存约束"));
+    QAction* openConstraintAction = new QAction(tr("装载约束"));
+    loadToolBar->addAction(addForceAction);
+    loadToolBar->addAction(addEdgeAction);
+    loadToolBar->addAction(saveConstraintAction);
+    loadToolBar->addAction(openConstraintAction);
+    //可视化工具栏
+    visualizeToolBar = addToolBar(tr("可视化"));
+    addToolBar(Qt::LeftToolBarArea, visualizeToolBar);
+
     connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
     connect(addRectAction, &QAction::triggered, this, &MainWindow::addRect);
     connect(addCircleAction, &QAction::triggered, this, &MainWindow::addCircle);
@@ -115,16 +140,9 @@ MainWindow::MainWindow(QWidget *parent)
     //绘图区   
     this->pen.setWidthF(pen.widthF() / ui->graphicsView->transform().m11());
     connect(ui->graphicsView, &MyGraphicsView::doubleClicked, this, &MainWindow::handleDoubleClick);
-    //初始化输入框的内容
-    ui->lineEditE->setText(QString::number(18000000000, 'e', 2));
-    ui->lineEditV->setText("0.25");
-    ui->lineEditT->setText("1");
-
-  
 
     //链接槽函数
     connect(redoAction, &QAction::triggered, this, &MainWindow::clear);
-    connect(addFixedGraphicsAction, &QAction::triggered, this, &MainWindow::addGraphics);
     connect(generateMshAction, &QAction::triggered, this, &MainWindow::generateMsh);
     connect(addForceAction, &QAction::triggered, this, &MainWindow::addForces);
     connect(addEdgeAction, &QAction::triggered, this,&MainWindow::addEdges);
@@ -147,44 +165,15 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-//创建图形
-void MainWindow::addGraphics()
-{
-    if (ui->lcValue->text().isEmpty()) {
-        QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
-        return; // 退出当前函数
-    }
-    double lc = ui->lcValue->text().toDouble();
-    mshInfo.lc = lc;
-
-/*    DialogAddGraphics* dialog = new DialogAddGraphics(nullptr, lc);
-    dialog->setLayout(this->layout());
-    dialog->setWindowTitle("添加图形");
-    QPoint cursorPos = QCursor::pos();
-    dialog->move(cursorPos);
-    dialog->show();
-    connect(dialog, &DialogAddGraphics::sendRectSignal, this, &MainWindow::paintRect);
-    connect(dialog, &DialogAddGraphics::sendCircleSignal, this, &MainWindow::paintCircle);*/
-}
-
-bool MainWindow::isLcFilled()
-{
-    if (ui->lcValue->text().isEmpty()) {
-        return false; 
-    }
-    return true;
-}
-
 
 
 void MainWindow::addPolygon()
 {
-    if (!isLcFilled()) {
+    if (lcValue == -1) {
         QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
         return; // 退出当前函数
     }
-    double lc = ui->lcValue->text().toDouble();
-    mshInfo.lc = lc;
+    mshInfo.lc = this->lcValue;
     ui->graphicsView->setMode(QString("CREATELINE"));
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
@@ -193,12 +182,11 @@ void MainWindow::addPolygon()
 
 void MainWindow::addRect()
 {
-    if (!isLcFilled()) {
+    if (this->lcValue == -1) {
         QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
         return; // 退出当前函数
     }
-    double lc = ui->lcValue->text().toDouble();
-    mshInfo.lc = lc;
+    mshInfo.lc = this->lcValue;
     ui->graphicsView->setMode(QString("CREATERECT"));
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
@@ -207,12 +195,11 @@ void MainWindow::addRect()
 
 void MainWindow::addCircle()
 {
-    if (!isLcFilled()) {
+    if (this->lcValue == -1) {
         QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
         return; // 退出当前函数
     }
-    double lc = ui->lcValue->text().toDouble();
-    mshInfo.lc = lc;
+    mshInfo.lc = lcValue;
     ui->graphicsView->setMode(QString("CREATECIRCLE"));
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
@@ -292,8 +279,7 @@ void MainWindow::generateMsh()//生成网格(从输入的图形中生成)
     //初始化网格点和三角形的信息
     mshInfo.initPointAndTriangleInfo();
     this->paintMsh();
-    this->permanentLabel->setText("网格数量为：" + QString::number(mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex].size()) + "网格点数量为:" + QString::number(mshInfo.tagMap.size()));
-
+    this->setMyStatus(mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex].size(), mshInfo.tagMap.size());
 }
 
 
@@ -336,7 +322,7 @@ void MainWindow::openMsh()//打开网格
 {
     if (Controller::loadMsh()) {
         paintMsh();
-        this->permanentLabel->setText("网格数量为：" + QString::number(mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex].size()) + "网格点数量为:" + QString::number(mshInfo.tagMap.size()));
+        this->setMyStatus(mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex].size(), mshInfo.tagMap.size());
     }
 }
 void MainWindow::addForces()//添加外力
@@ -377,17 +363,35 @@ void MainWindow::calcMatrix()//计算k，f，uv矩阵
 }
 void MainWindow::calcMatrixConcurrent()//多线程计算矩阵
 {
-    QString E = ui->lineEditE->text();
-    QString v = ui->lineEditV->text();
-    QString t = ui->lineEditT->text();
-    if (E.isEmpty() || v.isEmpty() || t.isEmpty()) {
-        QMessageBox::warning(this, tr("警告"), tr("请正确输入Evt的值"));
-        return;
-    }
-    Controller::generateMatrixes(E.toDouble(), v.toDouble(), t.toDouble());
+
+    Controller::generateMatrixes(this->E, this->v, this->t);
 
     emit updateProgressBarSignal(100);
     emit enableRenderActionSignal(true);
+}
+
+void MainWindow::setMyStatus(double E, double v, double t)
+{
+    paramsLabel->setText("E:" + QString::number(E, 'e', 2) + " V:" + QString::number(v) + " t:" + QString::number(t));
+    this->E = E;
+    this->v = v;
+    this->t = t;
+}
+
+void MainWindow::setMyStatus(double meshNums, double pointNums)
+{
+    this->permanentLabel->setText("网格数量为：" + QString::number(meshNums) + "网格点数量为:" + QString::number(pointNums));
+}
+void MainWindow::setLcValue(double lc)
+{
+    if (lc < 0) {
+        lcValueLabel->setText("lc未设置");
+        lcValue = -1;
+    }
+    else {
+        lcValueLabel->setText("lc:" + QString::number(lc));
+        lcValue = lc;
+    }
 }
 
 void MainWindow::render()//渲染
@@ -397,9 +401,7 @@ void MainWindow::render()//渲染
     double max = -DBL_MAX;
 
     CalcTools::getExtreme(min , max);
-    qDebug() << qSetRealNumberPrecision(2) << scientific << "min: " << min << ", max: " << max;
-    ui->lineEditMin->setText(QString::number(min, 'e', 2));
-    ui->lineEditMax->setText(QString::number(max, 'e', 2));
+    ui->graphicsView->showRenderInfo(max, min);
     for (MechanicBehavior info: mshInfo.mechanicBehaviors) {
         double stressValue = info.equalStress; // 这里获取当前三角形网格的应力值
         double normalizedStress = (stressValue - min) / (max - min);
@@ -429,23 +431,7 @@ void MainWindow::render()//渲染
         triangleItem->setPen(this->pen);
         ui->graphicsView->scene()->addItem(triangleItem);
     }
-    QLinearGradient gradient(0, 0, ui->colorBar->width(), 0);
-    gradient.setColorAt(0, Qt::green); // 应力最小值对应红色
-    gradient.setColorAt(0.5, Qt::blue); // 应力中间值对应绿色
-    gradient.setColorAt(1, Qt::red);
-    QPalette palette = ui->colorBar->palette();
-
-    // 使用渐变作为 QPalette 的笔刷
-    palette.setBrush(QPalette::Window, QBrush(gradient));
-
-    // 将 QPalette 应用到 QLabel 上
-    ui->colorBar->setAutoFillBackground(true); // 确保背景被填充
-    ui->colorBar->setPalette(palette);
-
-    // 更新 QLabel 以显示新的背景色
-    ui->colorBar->update();
 }
-
 
 
 void MainWindow::clear()//清空所有信息
@@ -456,36 +442,36 @@ void MainWindow::clear()//清空所有信息
     this->renderAction->setEnabled(false);
     ui->progressBar->setValue(0);
     mshInfo.clearAll();
-    this->permanentLabel->setText("网格数量为：" + QString::number(0) + "网格点数量为:" + QString::number(0));
+    this->setMyStatus(0, 0);
 }
 
 void MainWindow::handleDoubleClick(QPointF  point)//点击网格中的点，然后显示出相关信息
 {
         double x = point.x();
         double y = point.y();
-        ui->lineEditPointX->setText(QString::number(x));
-        ui->lineEditPointY->setText(QString::number(y));
         MechanicBehavior mechanicBehavior;
         double u;
         double v;
         if (CalcTools::getPointInfos(x, y, mechanicBehavior, u , v)) {
-            ui->sigmaX->setText(QString::number(mechanicBehavior.stress(0, 0), 'e', 2));
-            ui->sigmaY->setText(QString::number(mechanicBehavior.stress(1, 0), 'e', 2));
-            ui->tau->setText(QString::number(mechanicBehavior.stress(2, 0), 'e', 2));
-            ui->epsilonX->setText(QString::number(mechanicBehavior.strain(0, 0), 'e', 2));
-            ui->epsilonY->setText(QString::number(mechanicBehavior.strain(1, 0), 'e', 2));
-            ui->gamma->setText(QString::number(mechanicBehavior.strain(2, 0), 'e', 2));
-            ui->mu->setText(QString::number(u, 'e', 2));
-            ui->nu->setText(QString::number(v, 'e', 2));
+            QString htmlContent = htmlTemplate.arg(x).arg(y).arg(mechanicBehavior.stress(0, 0)).arg(mechanicBehavior.stress(1, 0)).
+                arg(mechanicBehavior.stress(2, 0)).arg(mechanicBehavior.strain(0, 0)).arg(mechanicBehavior.strain(1, 0)).arg(mechanicBehavior.strain(2, 0)).
+                arg(u).arg(v);
+            QTextCursor cursor = ui->outputEdit->textCursor();
+            cursor.movePosition(QTextCursor::End);
+            ui->outputEdit->append(htmlContent);
+            cursor.movePosition(QTextCursor::Down);
+            ui->outputEdit->setTextCursor(cursor);
+            ui->outputEdit->ensureCursorVisible();
         } else {
-            ui->sigmaX->setText(QString::number( 0));
-            ui->sigmaY->setText(QString::number(0));
-            ui->tau->setText(QString::number(0));
-            ui->epsilonX->setText(QString::number(0));
-            ui->epsilonY->setText(QString::number(0));
-            ui->gamma->setText(QString::number(0));
-            ui->mu->setText(QString::number(0));
-            ui->nu->setText(QString::number(0));
+            QString htmlContent = htmlTemplate.arg(x).arg(y).arg(0).arg(0).
+                arg(0).arg(0).arg(0).arg(0).
+                arg(0).arg(0);
+            QTextCursor cursor = ui->outputEdit->textCursor();
+            cursor.movePosition(QTextCursor::End);
+            ui->outputEdit->append(htmlContent);
+            cursor.movePosition(QTextCursor::Down);
+            ui->outputEdit->setTextCursor(cursor);
+            ui->outputEdit->ensureCursorVisible();
         }
 
 

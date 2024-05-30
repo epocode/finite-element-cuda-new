@@ -40,9 +40,6 @@
     <ClCompile Include="DialogAddForces.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DialogAddGraphics.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DialogEdgeAdd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -61,15 +58,15 @@
     <ClCompile Include="Controller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MyGradientLabel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="MainWindow.ui">
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="DialogAddForces.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtUic Include="DialogAddGraphics.ui">
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="DialogEdgeAdd.ui">
@@ -83,9 +80,6 @@
     <QtMoc Include="DialogAddForces.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="DialogAddGraphics.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="DialogEdgeAdd.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -96,6 +90,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="Controller.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="MyGradientLabel.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

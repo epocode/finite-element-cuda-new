@@ -5,6 +5,8 @@
 #include <QPoint>
 #include <QVector>
 #include <QLabel>
+#include "MyGradientLabel.h"
+#include <QGroupBox>
 
 class MyGraphicsView : public QGraphicsView
 {
@@ -27,6 +29,10 @@ public:
 	bool isDrawing;
 	QVector<QGraphicsLineItem*> lineItems;
 	QVector<QGraphicsEllipseItem*> ellipseItemList;
+	MyGradientLabel* colorBar;
+	QLabel* maxGradientLabel;
+	QLabel* minGradientLabel;
+	QGroupBox* gradientBox;
 
 public:
 	MyGraphicsView(QWidget* parent = nullptr);
@@ -35,6 +41,8 @@ public:
 	void setMode(QString mode);
 	void handleCoordinateInput(QString text);
 	bool isCloseToFirstPoint(const QPointF& mousePos);
+	void showRenderInfo(double max, double min);
+	void hideREnderInf();
 protected:
 	void wheelEvent(QWheelEvent* event) override;
 	void mousePressEvent(QMouseEvent* event) override;
@@ -42,6 +50,7 @@ protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void mouseDoubleClickEvent(QMouseEvent* event) override;
 	void keyPressEvent(QKeyEvent* event)override;
+	void drawForeground(QPainter* painter, const QRectF& rect) override;
 	
 signals:
 	void doubleClicked(QPointF point);

@@ -106,17 +106,16 @@
   <ItemGroup>
     <ClCompile Include="Controller.cpp" />
     <ClCompile Include="MshInformation.cpp" />
+    <ClCompile Include="MyGradientLabel.cpp" />
     <ClCompile Include="MyGraphicsView.cpp" />
     <ClCompile Include="MyStackedWidget.cpp" />
     <ClCompile Include="publicElement.cpp" />
     <QtRcc Include="MainWindows.qrc" />
     <QtUic Include="DialogAddForces.ui" />
-    <QtUic Include="DialogAddGraphics.ui" />
     <QtUic Include="DialogEdgeAdd.ui" />
     <QtUic Include="MainWindow.ui" />
     <ClCompile Include="CalcTools.cpp" />
     <ClCompile Include="DialogAddForces.cpp" />
-    <ClCompile Include="DialogAddGraphics.cpp" />
     <ClCompile Include="DialogEdgeAdd.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="main.cpp" />
@@ -131,9 +130,9 @@
     <ClInclude Include="MshInformation.h" />
     <QtMoc Include="MyGraphicsView.h" />
     <QtMoc Include="MyStackedWidget.h" />
+    <QtMoc Include="MyGradientLabel.h" />
     <ClInclude Include="publicElement.h" />
     <QtMoc Include="DialogEdgeAdd.h" />
-    <QtMoc Include="DialogAddGraphics.h" />
     <QtMoc Include="DialogAddForces.h" />
   </ItemGroup>
   <ItemGroup>
