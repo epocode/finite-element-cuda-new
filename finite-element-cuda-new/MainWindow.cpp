@@ -30,6 +30,7 @@
 #include "Controller.h"
 #include <QToolBar>
 #include<QToolButton>
+#include <QInputDialog>
 
 extern MshInformation mshInfo;
 
@@ -54,16 +55,10 @@ MainWindow::MainWindow(QWidget *parent)
     //初始化状态栏信息
     this->setMyStatus(18000000000, 0.25, 1);
     this->setMyStatus(0, 0);
-    setLcValue(0.5);
+    setLcValue(-1);
     //设置界面标题图标
     this->setWindowTitle("有限元分析软件V1.0");
     this->setWindowIcon(QIcon(":/MainWindows/title.png"));
-    //设置界面的qss
-    QFile file(":/MainWindows/ManjaroMix.qss");
-    file.open(QFile::ReadOnly);
-    QString qss = file.readAll();
-    this->setStyleSheet(qss);
-    file.close();
     //设置窗口位置大小
     int width = 1000;
     int height = 600;
@@ -78,22 +73,13 @@ MainWindow::MainWindow(QWidget *parent)
     sizes << 7 << 3;
     ui->splitter->setSizes(sizes);
     //添加菜单
-
-    QMenu *fileMenu = this->menuBar()->addMenu(tr("模型"));
+    QMenu *fileMenu = this->menuBar()->addMenu(tr("文件"));
     QAction *redoAction = fileMenu->addAction(tr("重置"));
     QAction *saveAction = fileMenu->addAction(tr("保存"));
     QAction *openAction = fileMenu->addAction(tr("打开"));
-
-
-    QAction *generateMshAction = this->menuBar()->addAction(tr("生成网格"));
-
-
-    calcAction = this->menuBar()->addAction(tr("计算"));
-    renderAction = this->menuBar()->addAction(tr("渲染"));
-    renderAction->setEnabled(false);
-    calcAction->setEnabled(false);
-
-
+    connect(redoAction, &QAction::triggered, this, &MainWindow::clear);
+    connect(saveAction, &QAction::triggered, this, &MainWindow::saveMsh);
+    connect(openAction, &QAction::triggered, this, &MainWindow::openMsh);
     //工具栏
     //图形工具栏
     graphicToolBar = addToolBar(tr("图形创建"));
@@ -108,10 +94,29 @@ MainWindow::MainWindow(QWidget *parent)
     graphicToolBar->addAction(addRectAction);
     graphicToolBar->addAction(addCircleAction);
     graphicToolBar->setVisible(false);
+    toolBarList.push_back(graphicToolBar);
+    connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
+    connect(addRectAction, &QAction::triggered, this, &MainWindow::addRect);
+    connect(addCircleAction, &QAction::triggered, this, &MainWindow::addCircle);
+    //网格工具栏
+    mshToolBar = addToolBar(tr("网格"));
+    addToolBar(Qt::LeftToolBarArea, mshToolBar);
+    QAction* generateMshAction = new QAction(tr("生成网格"));
+    mshToolBar->addAction(generateMshAction);
+    mshToolBar->setVisible(false);
+    toolBarList.push_back(mshToolBar);
+    connect(generateMshAction, &QAction::triggered, this, &MainWindow::generateMsh);
     //属性工具栏
     attributeToolBar = addToolBar(tr("属性"));
     addToolBar(Qt::LeftToolBarArea, attributeToolBar);
-
+    QAction* elasticAttribAction = new QAction(tr("弹性材料属性"));
+    QAction* thicknessAttribAction = new QAction(tr("材料厚度"));
+    attributeToolBar->addAction(elasticAttribAction);
+    attributeToolBar->addAction(thicknessAttribAction);
+    attributeToolBar->setVisible(false);
+    toolBarList.push_back(attributeToolBar);
+    connect(elasticAttribAction, &QAction::triggered, this, &MainWindow::setElasticAttrib);
+    connect(thicknessAttribAction, &QAction::triggered, this, &MainWindow::setThicknessAtrrib);
     //荷载工具栏
     loadToolBar = addToolBar(tr("荷载"));
     addToolBar(Qt::LeftToolBarArea, loadToolBar);
@@ -123,13 +128,32 @@ MainWindow::MainWindow(QWidget *parent)
     loadToolBar->addAction(addEdgeAction);
     loadToolBar->addAction(saveConstraintAction);
     loadToolBar->addAction(openConstraintAction);
+    loadToolBar->setVisible(false);
+    toolBarList.push_back(loadToolBar);
+    connect(addForceAction, &QAction::triggered, this, &MainWindow::addForces);
+    connect(addEdgeAction, &QAction::triggered, this, &MainWindow::addEdges);
+    connect(saveConstraintAction, &QAction::triggered, this, &MainWindow::saveConstraint);
+    connect(openConstraintAction, &QAction::triggered, this, &MainWindow::openConstraint);
+    //计算
+    calcToolBar = addToolBar(tr("计算"));
+    addToolBar(Qt::LeftToolBarArea, calcToolBar);
+    calcAction = new QAction(tr("计算"));
+    calcToolBar->addAction(calcAction);
+    calcToolBar->setVisible(false);
+    toolBarList.push_back(calcToolBar);
+    calcAction->setEnabled(false);
+    connect(calcAction, &QAction::triggered, this, &MainWindow::calcMatrix);
     //可视化工具栏
     visualizeToolBar = addToolBar(tr("可视化"));
     addToolBar(Qt::LeftToolBarArea, visualizeToolBar);
-
-    connect(addPolygonAction, &QAction::triggered, this, &MainWindow::addPolygon);
-    connect(addRectAction, &QAction::triggered, this, &MainWindow::addRect);
-    connect(addCircleAction, &QAction::triggered, this, &MainWindow::addCircle);
+    renderAction = new QAction(tr("渲染"));
+    visualizeToolBar->addAction(renderAction);
+    visualizeToolBar->setVisible(false);
+    toolBarList.push_back(visualizeToolBar);
+    renderAction->setEnabled(false);
+    setToolBarStatus(GRAPH);
+    connect(renderAction, &QAction::triggered, this, &MainWindow::render);
+    //连接槽函数
     connect(ui->graphicsView, &MyGraphicsView::createPolygonSignal, this, &MainWindow::createPolygonMsh);
     connect(ui->graphicsView, &MyGraphicsView::createRectSignal, this, &MainWindow::createRectMsh);
     connect(ui->graphicsView, &MyGraphicsView::createCircleSignal, this, &MainWindow::createCircleToMsh);
@@ -137,25 +161,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->startInput, &QLineEdit::returnPressed, this, &MainWindow::textEntered);
     connect(this, &MainWindow::sendTextToGraphicViewSignal, ui->graphicsView, &MyGraphicsView::handleCoordinateInput);
     connect(ui->graphicsView, &MyGraphicsView::setTipsSignal, this, &MainWindow::setTips);
+    connect(this, &MainWindow::updateProgressBarSignal, this, &MainWindow::updateProgressBar);
+    connect(this, &MainWindow::enableRenderActionSignal, this, &MainWindow::setRenderEnable);
+    connect(ui->toolBarSelectComboBox, &QComboBox::currentIndexChanged, this, &MainWindow::onComboBoxIndexChanged);
     //绘图区   
     this->pen.setWidthF(pen.widthF() / ui->graphicsView->transform().m11());
     connect(ui->graphicsView, &MyGraphicsView::doubleClicked, this, &MainWindow::handleDoubleClick);
-
-    //链接槽函数
-    connect(redoAction, &QAction::triggered, this, &MainWindow::clear);
-    connect(generateMshAction, &QAction::triggered, this, &MainWindow::generateMsh);
-    connect(addForceAction, &QAction::triggered, this, &MainWindow::addForces);
-    connect(addEdgeAction, &QAction::triggered, this,&MainWindow::addEdges);
-    connect(calcAction, &QAction::triggered, this, &MainWindow::calcMatrix);
-    connect(renderAction, &QAction::triggered, this, &MainWindow::render);
-    connect(saveAction, &QAction::triggered, this, &MainWindow::saveMsh);
-    connect(openAction, &QAction::triggered, this, &MainWindow::openMsh);
-    connect(saveConstraintAction, &QAction::triggered, this, &MainWindow::saveConstraint);
-    connect(openConstraintAction, &QAction::triggered, this,&MainWindow::openConstraint);
-    connect(this, &MainWindow::updateProgressBarSignal, this, &MainWindow::updateProgressBar);
-    connect(this, &MainWindow::enableRenderActionSignal, this, &MainWindow::setRenderEnable);
-    
-    
     MyStackedWidget* widget = ui->myStackedWidget;
     widget->setCurrentIndex(0);
 }
@@ -165,15 +176,27 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
-
+void MainWindow::onComboBoxIndexChanged(int index) {
+    setToolBarStatus((ToolBarStatus)index);
+}
+void MainWindow::setToolBarStatus(ToolBarStatus status) {
+    toolBarList[curStatus]->setVisible(false);
+    toolBarList[status]->setVisible(true);
+    curStatus = status;
+}
 void MainWindow::addPolygon()
 {
-    if (lcValue == -1) {
-        QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
-        return; // 退出当前函数
+    while (lcValue <= 0) {
+        bool ok;
+        QString text = QInputDialog::getText(this, "lc未设置或者不合理", "请输入lc的值:", QLineEdit::Normal, "", &ok);
+        if (!ok) {
+            return;
+        }
+        if (ok && !text.isEmpty()) {
+            this->lcValue = text.toDouble();
+            setLcValue(lcValue);
+        }
     }
-    mshInfo.lc = this->lcValue;
     ui->graphicsView->setMode(QString("CREATELINE"));
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
@@ -182,28 +205,42 @@ void MainWindow::addPolygon()
 
 void MainWindow::addRect()
 {
-    if (this->lcValue == -1) {
-        QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
-        return; // 退出当前函数
+    while (lcValue <= 0) {
+        bool ok;
+        QString text = QInputDialog::getText(this, "lc未设置或者不合理", "请输入lc的值:", QLineEdit::Normal, "", &ok);
+        if (!ok) {
+            return;
+        }
+        if (ok && !text.isEmpty()) {
+            this->lcValue = text.toDouble();
+            setLcValue(lcValue);
+        }
     }
-    mshInfo.lc = this->lcValue;
     ui->graphicsView->setMode(QString("CREATERECT"));
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
     setTips(QString("输入第一个点的坐标x y:"));
+    ui->outputEdit->append("添加了一个矩形");
 }
 
 void MainWindow::addCircle()
 {
-    if (this->lcValue == -1) {
-        QMessageBox::warning(this, "警告", "lc不能为空，请输入有效的内容。");
-        return; // 退出当前函数
+    while (lcValue <= 0) {
+        bool ok;
+        QString text = QInputDialog::getText(this, "lc未设置或者不合理", "请输入lc的值:", QLineEdit::Normal, "", &ok);
+        if (!ok) {
+            return;
+        }
+        if (ok && !text.isEmpty()) {
+            this->lcValue = text.toDouble();
+            setLcValue(lcValue);
+        }
     }
-    mshInfo.lc = lcValue;
     ui->graphicsView->setMode(QString("CREATECIRCLE"));
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
     setTips(QString("输入圆心的坐标x y:"));
+    ui->outputEdit->append("添加了一个圆");
 }
 
 
@@ -221,6 +258,7 @@ void MainWindow::createPolygonMsh(QVector<QPointF> points)
     }
     ui->myStackedWidget->setMode(QString("INIT"));
     Controller::addPolygonToMsh(newPoints);
+    ui->outputEdit->append("添加了一个多边形");
 }
 
 void MainWindow::createRectMsh(QPointF startPoint, QPointF endPoint)
@@ -250,22 +288,32 @@ void MainWindow::resetInputArea()
 
 void MainWindow::setTips(const QString &msg)
 {
-    QString test = QString("这是段测试代码");
     ui->tipsLabel->setText(msg);
 }
 
-//绘图区绘制四边形
-void MainWindow::paintRect(Rect rect)
+void MainWindow::setElasticAttrib()
 {
-    QGraphicsRectItem* rectItem = ui->graphicsView->scene()->addRect(rect.x, rect.y, rect.width, rect.height);
-    rectItem->setPen(this->pen);
+    bool ok;
+    QString value1 = QInputDialog::getText(this, "输入属性值", "弹性模量:", QLineEdit::Normal, "", &ok);
+    if (ok && !value1.isEmpty()) {
+        this->E = value1.toDouble();
+    }
+
+    QString value2 = QInputDialog::getText(this, "输入属性值", "杨氏模量:", QLineEdit::Normal, "", &ok);
+    if (ok && !value2.isEmpty()) {
+        this->v = value2.toDouble();
+    }
+    this->setMyStatus(this->E, this->v, this->t);
 }
-//绘制圆形
-void MainWindow::paintCircle(Circle circle)
+
+void MainWindow::setThicknessAtrrib()
 {
-    QGraphicsEllipseItem* circleItem = ui->graphicsView->scene()->addEllipse(circle.x - circle.radius, circle.y - circle.radius,
-        circle.radius * 2, circle.radius * 2);
-    circleItem->setPen(this->pen);
+    bool ok;
+    QString value2 = QInputDialog::getText(this, "输入属性值", "厚度:", QLineEdit::Normal, "", &ok);
+    if (ok && !value2.isEmpty()) {
+        this->t = value2.toDouble();
+    }
+    this->setMyStatus(this->E, this->v, this->t);
 }
 
 void MainWindow::generateMsh()//生成网格(从输入的图形中生成)
@@ -401,7 +449,6 @@ void MainWindow::render()//渲染
     double max = -DBL_MAX;
 
     CalcTools::getExtreme(min , max);
-    ui->graphicsView->showRenderInfo(max, min);
     for (MechanicBehavior info: mshInfo.mechanicBehaviors) {
         double stressValue = info.equalStress; // 这里获取当前三角形网格的应力值
         double normalizedStress = (stressValue - min) / (max - min);

@@ -11,7 +11,6 @@ class MyStackedWidget :
 public:
     enum Mode{INIT, START, END};
     Mode curMode;
-
 public:
     MyStackedWidget(QWidget* parent = nullptr);
     void setMode(Mode mode);

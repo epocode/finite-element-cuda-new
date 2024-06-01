@@ -17,7 +17,6 @@ extern Circle circle;
 
 MshInformation::MshInformation() {}
 
-
 vector<int> MshInformation::getPointTags(int i) {
     vector<int> tags;
     for (int j = 0; j < 3 ; j++) {

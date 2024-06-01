@@ -7,7 +7,8 @@
 #include <QLabel>
 #include "MyGradientLabel.h"
 #include <QGroupBox>
-
+#include "AbstractGraphicsviewOperator.h"
+#include "PolygonOperator.h"
 class MyGraphicsView : public QGraphicsView
 {
 	Q_OBJECT;
@@ -33,7 +34,7 @@ public:
 	QLabel* maxGradientLabel;
 	QLabel* minGradientLabel;
 	QGroupBox* gradientBox;
-
+	AbstractGraphicsviewOperator* myOperator;
 public:
 	MyGraphicsView(QWidget* parent = nullptr);
 	void setupDragMode();
@@ -41,7 +42,6 @@ public:
 	void setMode(QString mode);
 	void handleCoordinateInput(QString text);
 	bool isCloseToFirstPoint(const QPointF& mousePos);
-	void showRenderInfo(double max, double min);
 	void hideREnderInf();
 protected:
 	void wheelEvent(QWheelEvent* event) override;
@@ -50,7 +50,6 @@ protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void mouseDoubleClickEvent(QMouseEvent* event) override;
 	void keyPressEvent(QKeyEvent* event)override;
-	void drawForeground(QPainter* painter, const QRectF& rect) override;
 	
 signals:
 	void doubleClicked(QPointF point);

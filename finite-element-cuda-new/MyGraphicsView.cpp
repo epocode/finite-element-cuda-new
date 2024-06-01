@@ -44,6 +44,8 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     gradientBox->setLayout(layout);
     gradientBox->move(0, 30);
     gradientBox->hide();
+
+    myOperator = new PolygonOperator(this);
 }
 
 void MyGraphicsView::wheelEvent(QWheelEvent* event) {
@@ -69,30 +71,30 @@ void MyGraphicsView::handleCoordinateInput(QString text)
     QPointF point(x, y);
     switch (curMode) {
     case CREATELINE: 
-        if (points.size() <= 2) {
-            points.append(point);
-            myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
-            emit setTipsSignal(QString("设置下一个点的坐标 x y:"));
-            if (points.size() > 1) {//绘制线段
-                myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
-            }
-        }
-        else {
-            if (isCloseToFirstPoint(point)) {
-                // 绘制最后一条线段闭合多边形
-                myScene->addLine(QLineF(points.last(), points.first()), this->pen);
-                setMode(COMMON);
-                emit createPolygonSignal(points);
-                points.clear();
-                tempLine = nullptr;
-            }
-            else {
-                points.append(point);
-                myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
-                myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
-            }
-        }
-    
+        myOperator->handleCoordinateInput(text);
+        //if (points.size() <= 2) {
+        //    points.append(point);
+        //    myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
+        //    emit setTipsSignal(QString("设置下一个点的坐标 x y:"));
+        //    if (points.size() > 1) {//绘制线段
+        //        myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
+        //    }
+        //}
+        //else {
+        //    if (isCloseToFirstPoint(point)) {
+        //        // 绘制最后一条线段闭合多边形
+        //        myScene->addLine(QLineF(points.last(), points.first()), this->pen);
+        //        setMode(COMMON);
+        //        emit createPolygonSignal(points);
+        //        points.clear();
+        //        tempLine = nullptr;
+        //    }
+        //    else {
+        //        points.append(point);
+        //        myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen);
+        //        myScene->addLine(QLineF(points[points.size() - 2], point), this->pen);
+        //    }
+        //}
         break;
     case CREATERECT:
         list = text.split(" ");
@@ -157,34 +159,35 @@ void MyGraphicsView::mousePressEvent(QMouseEvent* event)
         QGraphicsView::mousePressEvent(event);
         break;
     case CREATELINE:
-        if (event->button() == Qt::MouseButton::LeftButton) {
-            if (points.size() <= 2) {
-                points.append(point);
-                ellipseItemList.push_back(myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen));
-                if (points.size() > 1) {//绘制线段
-                    lineItems.push_back(myScene->addLine(QLineF(points[points.size() - 2], point), this->pen));
-                }
-                QString msg = QString("设置下一个点的坐标 x y : ");
-                emit setTipsSignal(msg);
-            }
-            else {
-                if (isCloseToFirstPoint(point)) {
-                    // 绘制最后一条线段闭合多边形
-                    lineItems.push_back(myScene->addLine(QLineF(points.last(), points.first()), this->pen));
-                    setMode(COMMON);
-                    emit createPolygonSignal(points);
-                    emit resetInputAreaSignal();
-                    points.clear();
-                    lineItems.clear();
-                    ellipseItemList.clear();
-                }
-                else {
-                    points.append(point);
-                    ellipseItemList.push_back(myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen));
-                    lineItems.push_back(myScene->addLine(QLineF(points[points.size() - 2], point), this->pen));
-                }
-            }
-        }
+        //if (event->button() == Qt::MouseButton::LeftButton) {
+        //    if (points.size() <= 2) {
+        //        points.append(point);
+        //        ellipseItemList.push_back(myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen));
+        //        if (points.size() > 1) {//绘制线段
+        //            lineItems.push_back(myScene->addLine(QLineF(points[points.size() - 2], point), this->pen));
+        //        }
+        //        QString msg = QString("设置下一个点的坐标 x y : ");
+        //        emit setTipsSignal(msg);
+        //    }
+        //    else {
+        //        if (isCloseToFirstPoint(point)) {
+        //            // 绘制最后一条线段闭合多边形
+        //            lineItems.push_back(myScene->addLine(QLineF(points.last(), points.first()), this->pen));
+        //            setMode(COMMON);
+        //            emit createPolygonSignal(points);
+        //            emit resetInputAreaSignal();
+        //            points.clear();
+        //            lineItems.clear();
+        //            ellipseItemList.clear();
+        //        }
+        //        else {
+        //            points.append(point);
+        //            ellipseItemList.push_back(myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, this->pen));
+        //            lineItems.push_back(myScene->addLine(QLineF(points[points.size() - 2], point), this->pen));
+        //        }
+        //    }
+        //}
+        myOperator->mousePressEvent(event);
         break;
     case CREATERECT:
         if (event->button() == Qt::LeftButton) {
@@ -243,7 +246,6 @@ void MyGraphicsView::mouseMoveEvent(QMouseEvent* event)
     QPointF point = mapToScene(event->pos());
     // 更新坐标显示标签
     coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
-    //QGraphicsView::mouseMoveEvent(event); // 调用基类的方法
     switch (curMode) {
     case COMMON:
         if (event->buttons() & Qt::LeftButton) {
@@ -254,26 +256,27 @@ void MyGraphicsView::mouseMoveEvent(QMouseEvent* event)
         QGraphicsView::mouseMoveEvent(event);
         break;
     case CREATELINE:
-        if (!points.isEmpty()) {
-            QPointF point = mapToScene(event->pos());
-            bool found = isCloseToFirstPoint(point);
-            if (found) {
-                // 与首个点连接上后
-                if (tempLine) {
-                    myScene->removeItem((QGraphicsItem*)(tempLine));
-                    delete tempLine;
-                }
-                tempLine = myScene->addLine(QLineF(points.last(), points.first()), this->pen);
-            }
-            else {
-                if (tempLine) {
-                    myScene->removeItem((QGraphicsItem*)(tempLine));
-                    delete tempLine;
-                }
-                tempLine = myScene->addLine(QLineF(points.last(), point), this->pen);
-            }
+        myOperator->mouseMoveEvent(event);
+        //if (!points.isEmpty()) {
+        //    QPointF point = mapToScene(event->pos());
+        //    bool found = isCloseToFirstPoint(point);
+        //    if (found) {
+        //        // 与首个点连接上后
+        //        if (tempLine) {
+        //            myScene->removeItem((QGraphicsItem*)(tempLine));
+        //            delete tempLine;
+        //        }
+        //        tempLine = myScene->addLine(QLineF(points.last(), points.first()), this->pen);
+        //    }
+        //    else {
+        //        if (tempLine) {
+        //            myScene->removeItem((QGraphicsItem*)(tempLine));
+        //            delete tempLine;
+        //        }
+        //        tempLine = myScene->addLine(QLineF(points.last(), point), this->pen);
+        //    }
 
-        }
+        //}
         break;
     case CREATERECT: 
         if (isDrawing) {
@@ -361,10 +364,12 @@ bool MyGraphicsView::isCloseToFirstPoint(const QPointF& mousePos)
 }
 
 void MyGraphicsView::keyPressEvent(QKeyEvent* event) {
+    myOperator->keyPressEvent(event);
     if (event->key() == Qt::Key_Escape) {
         switch (curMode) {
         case CREATELINE:
-            if (points.size() == 0) {
+            myOperator->keyPressEvent(event);
+            /*if (points.size() == 0) {
                 setMode(COMMON);
                 emit resetInputAreaSignal();
                 tempLine = nullptr;
@@ -398,7 +403,7 @@ void MyGraphicsView::keyPressEvent(QKeyEvent* event) {
                 delete ellipseItem;
                 points.removeLast();
                 tempLine = nullptr;
-            }
+            }*/
             break;
         case CREATERECT:
             if (tempRect) {//完成了创建
@@ -428,38 +433,10 @@ void MyGraphicsView::keyPressEvent(QKeyEvent* event) {
     }
 }
 
-void MyGraphicsView::showRenderInfo(double max, double min)
-{
-    this->maxGradientLabel->setText(QString::number(max, 'e', 2));
-    this->minGradientLabel->setText(QString::number(min, 'e', 2));
-    this->gradientBox->show();
-}
 
 void MyGraphicsView::hideREnderInf()
 {
     this->gradientBox->hide();
 }
 
-void MyGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
-{
-    //Q_UNUSED(rect);
 
-    //// 计算colorbar的位置和尺寸
-    //qreal colorBarWidth = 20; // colorbar的宽度
-    //qreal colorBarHeight = this->height() - 20; // colorbar的高度，留出一些边距
-    //qreal colorBarX = this->viewport()->width() - colorBarWidth - 10; // colorbar的x坐标，靠近视图的右侧
-    //qreal colorBarY = 10; // colorbar的y坐标，从视图顶部向下10个单位
-
-    //// 创建渐变
-    //QLinearGradient gradient(colorBarX, colorBarY, colorBarX, colorBarY + colorBarHeight);
-    //gradient.setColorAt(0.0, Qt::blue); // 渐变起始颜色
-    //gradient.setColorAt(1.0, Qt::red); // 渐变结束颜色
-
-    //// 设置画笔和画刷
-    //painter->setPen(Qt::NoPen); // 不绘制边框
-    //painter->setBrush(gradient); // 设置渐变画刷
-
-    //// 绘制colorbar
-    //painter->drawRect(QRectF(colorBarX, colorBarY, colorBarWidth, colorBarHeight));
-
-}

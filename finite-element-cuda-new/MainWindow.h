@@ -39,11 +39,14 @@ private:
 private:
     //工具栏
     QToolBar* graphicToolBar;
+    QToolBar* mshToolBar;
     QToolBar* attributeToolBar;
     QToolBar* loadToolBar;
+    QToolBar* calcToolBar;
     QToolBar* visualizeToolBar;
-
-
+    enum ToolBarStatus{GRAPH, MSH,ATTRIB, LOAD, CALC, VISUALIZE};
+    ToolBarStatus curStatus = GRAPH;
+    QVector<QToolBar*> toolBarList;
 private:
     //状态栏信息
     double E;
@@ -54,7 +57,10 @@ signals:
     void updateProgressBarSignal(int value);
     void enableRenderActionSignal(bool enable);
     void sendTextToGraphicViewSignal(const QString& text);
+private:
+    void setToolBarStatus(ToolBarStatus status);
 private slots:
+    void onComboBoxIndexChanged(int index);
     void clear();
     void addPolygon();
     void addRect();
@@ -62,18 +68,13 @@ private slots:
     void createPolygonMsh(QVector<QPointF> points);
     void createRectMsh(QPointF startPoint, QPointF endPoint);
     void createCircleToMsh(double x, double y, double radius);
-
     void textEntered();
     void resetInputArea();
     void setTips(const QString &msg);
-
-    void paintRect(Rect rect);
-    void paintCircle(Circle circle);
-
-
-
     void generateMsh();
     void paintMsh();
+    void setElasticAttrib();
+    void setThicknessAtrrib();
     void addForces();
     void addEdges();
     void calcMatrix();
