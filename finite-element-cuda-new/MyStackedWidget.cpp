@@ -1,10 +1,13 @@
 #include "MyStackedWidget.h"
 #include <QLabel>
 #include <QHBoxLayout>
+#include <QLineEdit>
 MyStackedWidget::MyStackedWidget(QWidget* parent)
 	: QStackedWidget(parent)
 {
 	curMode = INIT;
+	this->focusFilter = new keyFocusFixFilter(this);
+	//this->installEventFilter(focusFilter);
 }
 
 void MyStackedWidget::setMode(Mode mode)
@@ -30,5 +33,28 @@ void MyStackedWidget::setMode(QString mode)
 	else if (mode == QString("END")) {
 		setMode(END);
 	}
+}
+
+void MyStackedWidget::setCurrentIndex(int index)
+{
+	//QWidget* currentWidget = this->currentWidget();
+	//if (currentWidget) {
+	//	QLineEdit* editLine = currentWidget->findChild<QLineEdit*>();
+	//	if (editLine && focusFilter) {
+	//		editLine->removeEventFilter(focusFilter);
+	//		delete focusFilter;
+	//	}
+	//}
+	QStackedWidget::setCurrentIndex(index);
+	QWidget* currentWidget = this->currentWidget();
+	//if (currentWidget) {
+	//	QLineEdit* editLine = currentWidget->findChild<QLineEdit*>();
+	//	if (editLine) {
+	//		this->focusFilter = new keyFocusFixFilter(editLine);
+	//		editLine->installEventFilter(focusFilter);
+	//		editLine->setFocusPolicy(Qt::StrongFocus);
+	//		editLine->setFocus();
+	//	}
+	//}
 }
 

@@ -34,7 +34,7 @@ void DialogAddForces::on_pushButton_2_clicked()//添加均布力
 
 void DialogAddForces::on_pushButton_clicked()//添加集中力
 {
-    Controller::addPointForce((ui->lineEdit_1->text()).toDouble(), (ui->lineEdit_2->text()).toDouble(),
+    Controller::addConcentratedForce((ui->lineEdit_1->text()).toDouble(), (ui->lineEdit_2->text()).toDouble(),
         (ui->lineEdit_3->text()).toDouble(), (ui->lineEdit_4->text()).toDouble());
     QMessageBox::information(this, "操作完成", "添加成功！");
 }

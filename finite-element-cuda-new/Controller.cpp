@@ -32,14 +32,14 @@ void Controller::generateMsh()
 	mshInfo.createMsh();
 }
 
-void Controller::saveMsh()
+void Controller::saveMsh(bool& success, QString& filePath)
 {
-	mshInfo.saveMsh();
+	mshInfo.saveMsh(success, filePath);
 }
 
-bool Controller::loadMsh()
+bool Controller::loadMsh(QString &filePath)
 {
-	return mshInfo.loadMsh();
+	return mshInfo.loadMsh(filePath);
 }
 
 void Controller::addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection)
@@ -47,7 +47,7 @@ void Controller::addUniformLoad(double startX, double startY, double endX, doubl
 	mshInfo.addUniformLoad(startX, startY, endX, endY, xDirection, yDirection);
 }
 
-void Controller::addPointForce(double x, double y, double xForce, double yForce)
+void Controller::addConcentratedForce(double x, double y, double xForce, double yForce)
 {
 	mshInfo.addPointForce(x, y, xForce, yForce);
 }
@@ -57,14 +57,14 @@ void Controller::addEdges(double x, double y, bool xFixed, bool yFixed)
 	CalcTools::setEdge(x, y, xFixed, yFixed);
 }
 
-void Controller::saveConstraint()
+void Controller::saveConstraint(bool &success, QString &filePath)
 {
-	mshInfo.saveConstraint();
+	mshInfo.saveConstraint(success, filePath);
 }
 
-void Controller::loadConstraint()
+void Controller::loadConstraint(bool& success, QString& filePath)
 {
-	mshInfo.loadConstraint();
+	mshInfo.loadConstraint(success, filePath);
 }
 
 void Controller::generateMatrixes(double E, double v, double t)

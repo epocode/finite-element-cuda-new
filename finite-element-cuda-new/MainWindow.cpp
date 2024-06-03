@@ -31,6 +31,9 @@
 #include <QToolBar>
 #include<QToolButton>
 #include <QInputDialog>
+#include "ForceGraphicsItem.h"
+#include <QGraphicsOpacityEffect>
+#include "UniformForceGraphicsItem.h"
 
 extern MshInformation mshInfo;
 
@@ -120,20 +123,31 @@ MainWindow::MainWindow(QWidget *parent)
     //荷载工具栏
     loadToolBar = addToolBar(tr("荷载"));
     addToolBar(Qt::LeftToolBarArea, loadToolBar);
-    QAction* addForceAction = new QAction(tr("添加外力"));
-    QAction* addEdgeAction = new QAction(tr("添加边界条件"));
+    QAction* addConcentratedForceAction = new QAction(tr("添加集中力"));
+    QAction* addUniformForceAction = new QAction(tr("添加均布力"));
+    QMenu* addForceMenu = new QMenu("添加外力", this);
+    addForceMenu ->addAction(addConcentratedForceAction);
+    addForceMenu->addAction(addUniformForceAction);
+    QAction* forceMenuAction = new QAction("添加外力");
+    forceMenuAction->setMenu(addForceMenu);
+    loadToolBar->addAction(forceMenuAction);
+    connect(addConcentratedForceAction, &QAction::triggered, this, &MainWindow::addConcentratedForce);
+    connect(addUniformForceAction, &QAction::triggered, this, &MainWindow::addUniformForce);
+    connect(ui->graphicsView, &MyGraphicsView::addConcentratedForceSignal, this, &MainWindow::showConcentratedForceInfo);
+    connect(ui->graphicsView, &MyGraphicsView::addUniformForceSignal, this, &MainWindow::showUniformForceInfo);
+
+    QAction* addEdgeAction = new QAction(tr("添加约束"));
     QAction* saveConstraintAction = new QAction(tr("保存约束"));
     QAction* openConstraintAction = new QAction(tr("装载约束"));
-    loadToolBar->addAction(addForceAction);
     loadToolBar->addAction(addEdgeAction);
     loadToolBar->addAction(saveConstraintAction);
     loadToolBar->addAction(openConstraintAction);
     loadToolBar->setVisible(false);
     toolBarList.push_back(loadToolBar);
-    connect(addForceAction, &QAction::triggered, this, &MainWindow::addForces);
     connect(addEdgeAction, &QAction::triggered, this, &MainWindow::addEdges);
     connect(saveConstraintAction, &QAction::triggered, this, &MainWindow::saveConstraint);
     connect(openConstraintAction, &QAction::triggered, this, &MainWindow::openConstraint);
+    connect(ui->graphicsView, &MyGraphicsView::addConstraintSignal, this, &MainWindow::showInfoFromSignal);
     //计算
     calcToolBar = addToolBar(tr("计算"));
     addToolBar(Qt::LeftToolBarArea, calcToolBar);
@@ -160,6 +174,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->graphicsView, &MyGraphicsView::resetInputAreaSignal, this, &MainWindow::resetInputArea);
     connect(ui->startInput, &QLineEdit::returnPressed, this, &MainWindow::textEntered);
     connect(this, &MainWindow::sendTextToGraphicViewSignal, ui->graphicsView, &MyGraphicsView::handleCoordinateInput);
+    connect(ui->graphicsView, &MyGraphicsView::sendCalcActivate, this, &MainWindow::activateCalc);
     connect(ui->graphicsView, &MyGraphicsView::setTipsSignal, this, &MainWindow::setTips);
     connect(this, &MainWindow::updateProgressBarSignal, this, &MainWindow::updateProgressBar);
     connect(this, &MainWindow::enableRenderActionSignal, this, &MainWindow::setRenderEnable);
@@ -220,7 +235,6 @@ void MainWindow::addRect()
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
     setTips(QString("输入第一个点的坐标x y:"));
-    ui->outputEdit->append("添加了一个矩形");
 }
 
 void MainWindow::addCircle()
@@ -240,7 +254,6 @@ void MainWindow::addCircle()
     ui->myStackedWidget->setMode(QString("START"));
     ui->startInput->setFocus();
     setTips(QString("输入圆心的坐标x y:"));
-    ui->outputEdit->append("添加了一个圆");
 }
 
 
@@ -268,11 +281,13 @@ void MainWindow::createRectMsh(QPointF startPoint, QPointF endPoint)
     double width = endPoint.x() - x;
     double height = endPoint.y() - y;
     Controller::addRectToMsh(x, y, width, height);
+    ui->outputEdit->append("添加了一个矩形");
 }
 
 void MainWindow::createCircleToMsh(double x, double y, double radius)
 {
     Controller::addCircleToMsh(x, y, radius);
+    ui->outputEdit->append("添加了一个圆");
 }
 
 void MainWindow::textEntered()//输入xy值
@@ -304,6 +319,7 @@ void MainWindow::setElasticAttrib()
         this->v = value2.toDouble();
     }
     this->setMyStatus(this->E, this->v, this->t);
+    ui->outputEdit->append("设置了材料属性E=" + QString::number(this->E) + " v=" + QString::number(this->v));
 }
 
 void MainWindow::setThicknessAtrrib()
@@ -314,6 +330,7 @@ void MainWindow::setThicknessAtrrib()
         this->t = value2.toDouble();
     }
     this->setMyStatus(this->E, this->v, this->t);
+    ui->outputEdit->append("设置了材料厚度：t=" + QString::number(this->t));
 }
 
 void MainWindow::generateMsh()//生成网格(从输入的图形中生成)
@@ -329,8 +346,6 @@ void MainWindow::generateMsh()//生成网格(从输入的图形中生成)
     this->paintMsh();
     this->setMyStatus(mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex].size(), mshInfo.tagMap.size());
 }
-
-
 
 void MainWindow::paintMsh()//绘制网格(被其他槽函数调用,这是从msh自带的网格信息中的三角形生成的)
 {
@@ -358,49 +373,90 @@ void MainWindow::paintMsh()//绘制网格(被其他槽函数调用,这是从msh�
         this->pen.setColor(Qt::green);
         ui->graphicsView->scene()->addLine(x1, y1, x2, y2, this->pen);
     }
+    ui->outputEdit->append("成功生成网格，网格数量为：" + QString::number(mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex].size())
+        + "网格点数量为:" + QString::number(mshInfo.tagMap.size()));
 }
+
 
 
 void MainWindow::saveMsh()//保存网格
 {
-    Controller::saveMsh();
+    bool success;
+    QString filePath;
+    Controller::saveMsh(success, filePath);
+    if (success) {
+        ui->outputEdit->append("已保存网格信息, 位置：" + filePath);
+    }
+    else {
+        ui->outputEdit->append("未保存网格信息");
+    }
 }
 
 void MainWindow::openMsh()//打开网格
 {
-    if (Controller::loadMsh()) {
+    QString filePath;
+
+    if (Controller::loadMsh(filePath)) {
         paintMsh();
         this->setMyStatus(mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex].size(), mshInfo.tagMap.size());
+        ui->outputEdit->append("已加载网格信息, 位置：" + filePath);
+    }
+    
+    else {
+        ui->outputEdit->append("加载网格信息失败");
     }
 }
-void MainWindow::addForces()//添加外力
+void MainWindow::showInfoFromSignal(QString msg)
 {
-    DialogAddForces* dialog = new DialogAddForces;
-    dialog->setWindowTitle("添加外力");
-    QPoint cursorPos = QCursor::pos();
-    dialog->move(cursorPos);
-    dialog->show();
+    ui->outputEdit->append(msg);
+}
+void MainWindow::addConcentratedForce()
+{
+    ui->graphicsView->setMode("CONCENTRATEFORCE");
+    ui->myStackedWidget->setMode("START");
+    ui->startInput->setFocus();
+    setTips(QString("输入集中力添加的位置x y:"));
 }
 
+void MainWindow::addUniformForce()
+{
+    ui->graphicsView->setMode("UNIFORMFORCE");
+    ui->myStackedWidget->setMode("START");
+    ui->startInput->setFocus();
+    setTips(QString("输入均布力的起始坐标 x y:"));
+}
 void MainWindow::addEdges()//添加边界条件
 {
-    DialogEdgeAdd* dialog = new DialogEdgeAdd;
-    dialog->setWindowTitle("添加边界条件");
-    QPoint cursorPos = QCursor::pos();
-    dialog->move(cursorPos);
-    dialog->show();
-    connect(dialog, &DialogEdgeAdd::sendCalcActivate, this, &MainWindow::activateCalc);
-
+    ui->graphicsView->setMode("CONSTRAINT");
+    ui->myStackedWidget->setMode("START");
+    ui->startInput->setFocus();
+    setTips(QString("输入添加约束的坐标 x y:"));
 }
 
 void MainWindow::saveConstraint()//保存约束
 {
-    Controller::saveConstraint();
+    bool success;
+    QString filePath;
+    Controller::saveConstraint(success, filePath);
+    if (success) {
+        ui->outputEdit->append("成功保存约束信息，位置：" + filePath);
+    }
+    else {
+        ui->outputEdit->append("保存约束信息失败");
+    }
 }
 void MainWindow::openConstraint()//装载约束条件的数据
 {
-    Controller::loadConstraint();
+    bool success;
+    QString filePath;
+    Controller::loadConstraint(success, filePath);
     this->calcAction->setEnabled(true);
+    if (success) {
+        ui->outputEdit->append("成功加载约束信息，位置：" + filePath);
+    }
+    else {
+        ui->outputEdit->append("加载约束信息失败");
+    }
 }
 
 
@@ -449,6 +505,7 @@ void MainWindow::render()//渲染
     double max = -DBL_MAX;
 
     CalcTools::getExtreme(min , max);
+    ui->graphicsView->showRenderInfo(max, min);
     for (MechanicBehavior info: mshInfo.mechanicBehaviors) {
         double stressValue = info.equalStress; // 这里获取当前三角形网格的应力值
         double normalizedStress = (stressValue - min) / (max - min);
@@ -540,3 +597,14 @@ void MainWindow::updateProgressBar(int value)
     ui->progressBar->setValue(value);
 }
 
+void MainWindow::showConcentratedForceInfo(double x, double y, double xForce, double yForce)
+{
+    ui->outputEdit->append("添加了集中力：x:" + QString::number(x) + ", y:" + QString::number(y)+ ", 水平作用力：" + 
+        QString::number(xForce) + ",竖直作用力：" + QString::number(yForce));
+}
+
+void MainWindow::showUniformForceInfo(double startX, double startY, double endX, double endY, double xForce, double yForce) {
+    ui->outputEdit->append("添加了均布力：起始位置x:" + QString::number(startX) + ", 起始坐标y:" + QString::number(startY) + 
+        "终点坐标x:" + QString::number(endX) + "终点坐标y:" + QString::number(endY) + ", 水平作用力：" +
+        QString::number(xForce) + ",竖直作用力：" + QString::number(yForce));
+}

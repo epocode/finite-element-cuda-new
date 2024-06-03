@@ -9,12 +9,14 @@
 #include <QGroupBox>
 #include "AbstractGraphicsviewOperator.h"
 #include "PolygonOperator.h"
+#include "CommonOperator.h"
+#include "RectOperator.h"
+#include "CircleOperator.h"
 class MyGraphicsView : public QGraphicsView
 {
 	Q_OBJECT;
 public:
-	enum Mode { COMMON, CREATELINE, CREATERECT, CREATECIRCLE};
-	Mode curMode;
+	enum Mode { COMMON, CREATELINE, CREATERECT, CREATECIRCLE, CONCENTRATEDFORCE, UNIFORMFORCE, CONSTRAINT};
 	bool isDragging;
 	QPoint lastMousePos;
 	QVector<QPointF> points;
@@ -35,6 +37,7 @@ public:
 	QLabel* minGradientLabel;
 	QGroupBox* gradientBox;
 	AbstractGraphicsviewOperator* myOperator;
+	QVector<AbstractGraphicsviewOperator*> operatorList;
 public:
 	MyGraphicsView(QWidget* parent = nullptr);
 	void setupDragMode();
@@ -42,7 +45,8 @@ public:
 	void setMode(QString mode);
 	void handleCoordinateInput(QString text);
 	bool isCloseToFirstPoint(const QPointF& mousePos);
-	void hideREnderInf();
+	void hideRenderInfo();
+	void showRenderInfo(double max, double min);
 protected:
 	void wheelEvent(QWheelEvent* event) override;
 	void mousePressEvent(QMouseEvent* event) override;
@@ -57,8 +61,10 @@ signals:
 	void createRectSignal(QPointF startPoint, QPointF endPoint);
 	void createCircleSignal(double x, double y, double radius);
 	void resetInputAreaSignal();
-	void setTipsSignal(const QString &msg);
-
-
+	void setTipsSignal(const QString &msg);//设置输入框的提示
+	void addConcentratedForceSignal(double x, double y, double xForce, double yForce);
+	void addUniformForceSignal(double startX, double startY, double endX, double endY, double xForce, double yForce);
+	void addConstraintSignal(QString msg);
+	void sendCalcActivate();
 };
 

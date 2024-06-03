@@ -104,14 +104,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AbstractGraphicsviewOperator.cpp" />
+    <ClCompile Include="AddConstraintOperator.cpp" />
+    <ClCompile Include="CircleOperator.cpp" />
+    <ClCompile Include="CommonOperator.cpp" />
+    <ClCompile Include="ConcentratedForceOperator.cpp" />
     <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="ForceGraphicsItem.cpp" />
+    <ClCompile Include="keyFocusFixFilter.cpp" />
     <ClCompile Include="MshInformation.cpp" />
     <ClCompile Include="MyGradientLabel.cpp" />
     <ClCompile Include="MyGraphicsView.cpp" />
     <ClCompile Include="MyStackedWidget.cpp" />
     <ClCompile Include="PolygonOperator.cpp" />
     <ClCompile Include="publicElement.cpp" />
+    <ClCompile Include="RectOperator.cpp" />
+    <ClCompile Include="UniformForceGraphicsItem.cpp" />
+    <ClCompile Include="UniformForceOperator.cpp" />
     <QtRcc Include="MainWindows.qrc" />
     <QtUic Include="DialogAddForces.ui" />
     <QtUic Include="DialogEdgeAdd.ui" />
@@ -127,8 +135,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AbstractGraphicsviewOperator.h" />
+    <ClInclude Include="AddConstraintOperator.h" />
     <ClInclude Include="CalcTools.h" />
+    <ClInclude Include="CircleOperator.h" />
+    <ClInclude Include="UniformForceOperator.h" />
+    <QtMoc Include="UniformForceGraphicsItem.h" />
+    <QtMoc Include="keyFocusFixFilter.h" />
+    <QtMoc Include="ForceGraphicsItem.h" />
+    <ClInclude Include="ConcentratedForceOperator.h" />
+    <ClInclude Include="RectOperator.h" />
     <QtMoc Include="Controller.h" />
+    <ClInclude Include="CommonOperator.h" />
     <ClInclude Include="cusolver_utils.h" />
     <ClInclude Include="MshInformation.h" />
     <QtMoc Include="MyGraphicsView.h" />

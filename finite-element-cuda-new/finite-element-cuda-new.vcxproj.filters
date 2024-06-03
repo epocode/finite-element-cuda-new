@@ -30,6 +30,33 @@
     <Filter Include="Header Files\graphics-view">
       <UniqueIdentifier>{f77e9dda-2529-4c22-a364-ff67c7ee1992}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\interact">
+      <UniqueIdentifier>{dd834ca1-cab3-4a7c-8dea-259792ff7032}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\interact">
+      <UniqueIdentifier>{c9603c4b-228b-427d-a703-92dcd3885371}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\forces">
+      <UniqueIdentifier>{4fce32f6-d827-4826-8077-eafe659ce987}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\forces">
+      <UniqueIdentifier>{36c76306-396f-4d3f-b54c-b6ec236e03f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\constraint">
+      <UniqueIdentifier>{e547de71-f5e0-4a57-bf13-31c3b7baa976}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\calculate">
+      <UniqueIdentifier>{955ba2a7-fd84-4be6-bb57-28271accfb98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\main">
+      <UniqueIdentifier>{6118c4e8-6edc-44c8-8d5f-7fb3110440c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\constarint">
+      <UniqueIdentifier>{4d66d1de-9e05-40ab-bf68-be7be59083d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\calculate">
+      <UniqueIdentifier>{80ecae88-41e5-4c21-9c69-77a3cc46be52}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="MainWindows.qrc">
@@ -37,12 +64,6 @@
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MainWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CalcTools.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DialogAddForces.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -55,13 +76,7 @@
     <ClCompile Include="publicElement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MyStackedWidget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Controller.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MyGradientLabel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
@@ -70,11 +85,50 @@
     <ClCompile Include="MyGraphicsView.cpp">
       <Filter>Source Files\graphics-view</Filter>
     </ClCompile>
-    <ClCompile Include="AbstractGraphicsviewOperator.cpp">
+    <ClCompile Include="PolygonOperator.cpp">
       <Filter>Source Files\graphics-view</Filter>
     </ClCompile>
-    <ClCompile Include="PolygonOperator.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="CommonOperator.cpp">
+      <Filter>Source Files\graphics-view</Filter>
+    </ClCompile>
+    <ClCompile Include="RectOperator.cpp">
+      <Filter>Source Files\graphics-view</Filter>
+    </ClCompile>
+    <ClCompile Include="CircleOperator.cpp">
+      <Filter>Source Files\graphics-view</Filter>
+    </ClCompile>
+    <ClCompile Include="MyGradientLabel.cpp">
+      <Filter>Source Files\graphics-view</Filter>
+    </ClCompile>
+    <ClCompile Include="MyStackedWidget.cpp">
+      <Filter>Source Files\interact</Filter>
+    </ClCompile>
+    <ClCompile Include="keyFocusFixFilter.cpp">
+      <Filter>Source Files\interact</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceGraphicsItem.cpp">
+      <Filter>Source Files\forces</Filter>
+    </ClCompile>
+    <ClCompile Include="keyFocusFixFilter.cpp">
+      <Filter>Source Files\interact</Filter>
+    </ClCompile>
+    <ClCompile Include="ConcentratedForceOperator.cpp">
+      <Filter>Source Files\graphics-view</Filter>
+    </ClCompile>
+    <ClCompile Include="UniformForceGraphicsItem.cpp">
+      <Filter>Source Files\forces</Filter>
+    </ClCompile>
+    <ClCompile Include="UniformForceOperator.cpp">
+      <Filter>Source Files\graphics-view</Filter>
+    </ClCompile>
+    <ClCompile Include="AddConstraintOperator.cpp">
+      <Filter>Source Files\constraint</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>Source Files\main</Filter>
+    </ClCompile>
+    <ClCompile Include="CalcTools.cpp">
+      <Filter>Source Files\calculate</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -89,39 +143,45 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="MainWindow.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="DialogAddForces.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="DialogEdgeAdd.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="MyStackedWidget.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="Controller.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="MyGradientLabel.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="MyGraphicsView.h">
       <Filter>Header Files\graphics-view</Filter>
     </QtMoc>
+    <QtMoc Include="MyGradientLabel.h">
+      <Filter>Header Files\graphics-view</Filter>
+    </QtMoc>
+    <QtMoc Include="MyStackedWidget.h">
+      <Filter>Header Files\interact</Filter>
+    </QtMoc>
+    <QtMoc Include="keyFocusFixFilter.h">
+      <Filter>Header Files\interact</Filter>
+    </QtMoc>
+    <QtMoc Include="ForceGraphicsItem.h">
+      <Filter>Header Files\forces</Filter>
+    </QtMoc>
+    <QtMoc Include="ForceGraphicsItem.h">
+      <Filter>Header Files\forces</Filter>
+    </QtMoc>
+    <QtMoc Include="UniformForceGraphicsItem.h">
+      <Filter>Header Files\forces</Filter>
+    </QtMoc>
+    <QtMoc Include="MainWindow.h">
+      <Filter>Header Files\main</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CalcTools.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MshInformation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="publicElement.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cusolver_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AbstractGraphicsviewOperator.h">
@@ -130,15 +190,39 @@
     <ClInclude Include="PolygonOperator.h">
       <Filter>Header Files\graphics-view</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="MatrixSolver.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
+    <ClInclude Include="CommonOperator.h">
+      <Filter>Header Files\graphics-view</Filter>
+    </ClInclude>
+    <ClInclude Include="RectOperator.h">
+      <Filter>Header Files\graphics-view</Filter>
+    </ClInclude>
+    <ClInclude Include="CircleOperator.h">
+      <Filter>Header Files\graphics-view</Filter>
+    </ClInclude>
+    <ClInclude Include="ConcentratedForceOperator.h">
+      <Filter>Header Files\graphics-view</Filter>
+    </ClInclude>
+    <ClInclude Include="UniformForceOperator.h">
+      <Filter>Header Files\graphics-view</Filter>
+    </ClInclude>
+    <ClInclude Include="AddConstraintOperator.h">
+      <Filter>Header Files\constarint</Filter>
+    </ClInclude>
+    <ClInclude Include="CalcTools.h">
+      <Filter>Header Files\calculate</Filter>
+    </ClInclude>
+    <ClInclude Include="cusolver_utils.h">
+      <Filter>Header Files\calculate</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ManjaroMix.qss">
       <Filter>Resource Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="MatrixSolver.cu">
+      <Filter>Source Files\calculate</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

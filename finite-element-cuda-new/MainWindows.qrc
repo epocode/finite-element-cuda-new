@@ -5,8 +5,8 @@
         <file>circle.png</file>
         <file>rect.png</file>
         <file>connect-line.png</file>
+        <file>arrow.png</file>
     </qresource>
-    <qresource prefix="/">
-        <file>ManjaroMix.qss</file>
-    </qresource>
+    <qresource prefix="/"/>
+    <qresource prefix="/new/prefix1"/>
 </RCC>

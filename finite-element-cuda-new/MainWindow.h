@@ -75,18 +75,22 @@ private slots:
     void paintMsh();
     void setElasticAttrib();
     void setThicknessAtrrib();
-    void addForces();
+    void addConcentratedForce();
+    void addUniformForce();
     void addEdges();
     void calcMatrix();
     void render();
     void saveMsh();
     void openMsh();
+    void showInfoFromSignal(QString msg);
     void saveConstraint();
     void openConstraint();
     void handleDoubleClick(QPointF point);
     void activateCalc();
     void setRenderEnable(bool enable);
     void updateProgressBar(int value);
+    void showConcentratedForceInfo(double x, double y, double xForce, double yForce);
+    void showUniformForceInfo(double startX, double startY, double endX, double endY, double xForce, double yForce);
 
 };
 

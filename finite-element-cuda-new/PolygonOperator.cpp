@@ -1,4 +1,4 @@
-#include "PolygonOperator.h"
+ï»¿#include "PolygonOperator.h"
 
 PolygonOperator::PolygonOperator(MyGraphicsView* view)
 {
@@ -14,14 +14,14 @@ void PolygonOperator::handleCoordinateInput(QString text)
     if (view->points.size() <= 2) {
         view->points.append(point);
         view->myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, view->pen);
-        emit view->setTipsSignal(QString("ÉèÖÃÏÂÒ»¸öµãµÄ×ø±ê x y:"));
-        if (view->points.size() > 1) {//»æÖÆÏß¶Î
+        emit view->setTipsSignal(QString("è®¾ç½®ä¸‹ä¸€ä¸ªç‚¹çš„åæ ‡ x y:"));
+        if (view->points.size() > 1) {//ç»˜åˆ¶çº¿æ®µ
             view->myScene->addLine(QLineF(view->points[view->points.size() - 2], point), view->pen);
         }
     }
     else {
         if (view->isCloseToFirstPoint(point)) {
-            // »æÖÆ×îºóÒ»ÌõÏß¶Î±ÕºÏ¶à±ßÐÎ
+            // ç»˜åˆ¶æœ€åŽä¸€æ¡çº¿æ®µé—­åˆå¤šè¾¹å½¢
             view->myScene->addLine(QLineF(view->points.last(), view->points.first()), view->pen);
             view->setMode(view->COMMON);
             emit view->createPolygonSignal(view->points);
@@ -43,15 +43,15 @@ void PolygonOperator::mousePressEvent(QMouseEvent* event)
         if (view->points.size() <= 2) {
             view->points.append(point);
             view->ellipseItemList.push_back(view->myScene->addEllipse(point.x() - 0.05, point.y() - 0.05, 0.1, 0.1, view->pen));
-            if (view->points.size() > 1) {//»æÖÆÏß¶Î
+            if (view->points.size() > 1) {//ç»˜åˆ¶çº¿æ®µ
                 view->lineItems.push_back(view->myScene->addLine(QLineF(view->points[view->points.size() - 2], point), view->pen));
             }
-            QString msg = QString("ÉèÖÃÏÂÒ»¸öµãµÄ×ø±ê x y : ");
+            QString msg = QString("è®¾ç½®ä¸‹ä¸€ä¸ªç‚¹çš„åæ ‡ x y : ");
             emit view->setTipsSignal(msg);
         }
         else {
             if (view->isCloseToFirstPoint(point)) {
-                // »æÖÆ×îºóÒ»ÌõÏß¶Î±ÕºÏ¶à±ßÐÎ
+                // ç»˜åˆ¶æœ€åŽä¸€æ¡çº¿æ®µé—­åˆå¤šè¾¹å½¢
                 view->lineItems.push_back(view->myScene->addLine(QLineF(view->points.last(), view->points.first()), view->pen));
                 view->setMode(view->COMMON);
                 emit view->createPolygonSignal(view->points);
@@ -72,13 +72,13 @@ void PolygonOperator::mousePressEvent(QMouseEvent* event)
 void PolygonOperator::mouseMoveEvent(QMouseEvent* event)
 {
     QPointF point = view->mapToScene(event->pos());
-    // ¸üÐÂ×ø±êÏÔÊ¾±êÇ©
+    // æ›´æ–°åæ ‡æ˜¾ç¤ºæ ‡ç­¾
     view->coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
     if (!view->points.isEmpty()) {
             QPointF point = view->mapToScene(event->pos());
             bool found = view->isCloseToFirstPoint(point);
             if (found) {
-                // ÓëÊ×¸öµãÁ¬½ÓÉÏºó
+                // ä¸Žé¦–ä¸ªç‚¹è¿žæŽ¥ä¸ŠåŽ
                 if (view->tempLine) {
                     view->myScene->removeItem((QGraphicsItem*)(view->tempLine));
                     delete view->tempLine;

@@ -57,17 +57,22 @@ public:
     void addCircle(double x, double y, double radius);
     void addPolygon(vector<Coordinate> points);
     void createMsh();
-    void saveMsh();
-    bool loadMsh();
+    void saveMsh(bool &success, QString &filePath);
+    bool loadMsh(QString& filePath);
     void addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection);
     void addPointForce(double x, double y, double xForce, double yForce);
-    void saveConstraint();
-    void loadConstraint();
+    void saveConstraint(bool& success, QString& filePath);
+    void loadConstraint(bool& success, QString& filePath);
     void saveMatrixes();
 private:
     struct ComparePair {
         bool operator()(const std::pair<double, double>& a, const std::pair<double, double>& b) const {
             return a.first > b.first; // 按照pair的first值从小到大排序
+        }
+    };
+    struct pair_hash {
+        inline std::size_t operator()(const std::pair<int, int>& v) const {
+            return v.first * 31 + v.second;
         }
     };
 };

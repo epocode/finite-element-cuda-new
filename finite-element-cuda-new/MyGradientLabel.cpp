@@ -4,7 +4,7 @@
 MyGradientLabel::MyGradientLabel(QWidget *parent = nullptr)
 	: QLabel(parent)
 {
-	setFixedSize(20, 200);
+	setFixedSize(30, 150);
 }
 
 MyGradientLabel::~MyGradientLabel()
