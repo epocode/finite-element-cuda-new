@@ -16,12 +16,12 @@ public:
     double  t;
     double v;
     double lc;
-    //æ–‡ä»¶ä¿¡æ¯
+    //ÎÄ¼şĞÅÏ¢
     QString filePath;
-    //ç”¨äºå­˜å‚¨curveLoopçš„ä¿¡æ¯
+    //ÓÃÓÚ´æ´¢curveLoopµÄĞÅÏ¢
     vector<int> curveLoopList;
-    //ç½‘æ ¼ç‚¹çš„ä¿¡æ¯
-    unordered_map<int, int> tagMap;//å°†ç‚¹çš„indexå¯¹åº”çŸ©é˜µä¸­çš„ä¸‹æ ‡
+    //Íø¸ñµãµÄĞÅÏ¢
+    unordered_map<int, int> tagMap;//½«µãµÄindex¶ÔÓ¦¾ØÕóÖĞµÄÏÂ±ê
 
     vector<size_t> nodeTags;//the tags of all nodes
     vector<double> coord; //the position of every nodes
@@ -35,16 +35,16 @@ public:
     vector<double> xList;
     vector<double> yList;
 
-    //è®¡ç®—æ—¶çš„KçŸ©é˜µï¼Œè®¡ç®—æ—¶çš„FçŸ©é˜µ
+    //¼ÆËãÊ±µÄK¾ØÕó£¬¼ÆËãÊ±µÄF¾ØÕó
     Eigen::MatrixXd kMatrix;
     Eigen::MatrixXd fMatrix;
     Eigen::MatrixXd X;
-    //è¾¹ç•ŒåŠ›
+    //±ß½çÁ¦
     vector<Force> forces;
-    //è¾¹ç•Œæ¡ä»¶
+    //±ß½çÌõ¼ş
     vector<EdgeInfo> edgeInfos;
 
-    //æ¸²æŸ“çš„æ—¶å€™éœ€è¦çš„ä¿¡æ¯
+    //äÖÈ¾µÄÊ±ºòĞèÒªµÄĞÅÏ¢
     vector<MechanicBehavior>  mechanicBehaviors;
 
 
@@ -57,7 +57,7 @@ public:
     void addCircle(double x, double y, double radius);
     void addPolygon(vector<Coordinate> points);
     void createMsh();
-    void saveMsh(bool &success, QString &filePath);
+    void saveMsh(bool& success, QString& filePath);
     bool loadMsh(QString& filePath);
     void addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection);
     void addPointForce(double x, double y, double xForce, double yForce);
@@ -67,7 +67,7 @@ public:
 private:
     struct ComparePair {
         bool operator()(const std::pair<double, double>& a, const std::pair<double, double>& b) const {
-            return a.first > b.first; // æŒ‰ç…§pairçš„firstå€¼ä»å°åˆ°å¤§æ’åº
+            return a.first > b.first; // °´ÕÕpairµÄfirstÖµ´ÓĞ¡µ½´óÅÅĞò
         }
     };
     struct pair_hash {

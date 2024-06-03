@@ -10,7 +10,6 @@
 #include <QCoreApplication>
 #include <QtConcurrent/QtConcurrent>
 #include <QThread>
-#include "DialogEdgeAdd.h"
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QGraphicsRectItem>
@@ -20,7 +19,6 @@
 #include <QFileDialog>
 #include "publicElement.h"
 #include <QMessageBox>
-#include "DialogAddForces.h"
 #include <iostream>
 #include <QProgressBar>
 #include <QJsonArray>
@@ -595,6 +593,7 @@ void MainWindow::updateProgressBar(int value)
 {
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(value);
+    ui->outputEdit->append("计算完成");
 }
 
 void MainWindow::showConcentratedForceInfo(double x, double y, double xForce, double yForce)

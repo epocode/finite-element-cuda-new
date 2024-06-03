@@ -42,7 +42,7 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     layout->addWidget(colorBar);
     layout->addWidget(minGradientLabel);
     gradientBox->setLayout(layout);
-    gradientBox->move(0, 30);
+    gradientBox->move(0, 40);
     gradientBox->hide();
     //设置绘图区状态
     operatorList.push_back(new CommonOperator(this));
@@ -169,8 +169,8 @@ void MyGraphicsView::hideRenderInfo()
 
 void MyGraphicsView::showRenderInfo(double max, double min) {
     this->gradientBox->show();
-    this->maxGradientLabel->setText(QString::number(max, 'e', 2));
-    this->minGradientLabel->setText(QString::number(min, 'e', 2));
+    this->maxGradientLabel->setText(QString::number(max, 'e', 1));
+    this->minGradientLabel->setText(QString::number(min, 'e', 1));
 }
 
 

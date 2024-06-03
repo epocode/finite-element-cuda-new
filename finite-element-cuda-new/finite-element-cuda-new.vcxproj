@@ -121,12 +121,8 @@
     <ClCompile Include="UniformForceGraphicsItem.cpp" />
     <ClCompile Include="UniformForceOperator.cpp" />
     <QtRcc Include="MainWindows.qrc" />
-    <QtUic Include="DialogAddForces.ui" />
-    <QtUic Include="DialogEdgeAdd.ui" />
     <QtUic Include="MainWindow.ui" />
     <ClCompile Include="CalcTools.cpp" />
-    <ClCompile Include="DialogAddForces.cpp" />
-    <ClCompile Include="DialogEdgeAdd.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -138,6 +134,7 @@
     <ClInclude Include="AddConstraintOperator.h" />
     <ClInclude Include="CalcTools.h" />
     <ClInclude Include="CircleOperator.h" />
+    <ClInclude Include="MshInformation.h" />
     <ClInclude Include="UniformForceOperator.h" />
     <QtMoc Include="UniformForceGraphicsItem.h" />
     <QtMoc Include="keyFocusFixFilter.h" />
@@ -147,14 +144,11 @@
     <QtMoc Include="Controller.h" />
     <ClInclude Include="CommonOperator.h" />
     <ClInclude Include="cusolver_utils.h" />
-    <ClInclude Include="MshInformation.h" />
     <QtMoc Include="MyGraphicsView.h" />
     <QtMoc Include="MyStackedWidget.h" />
     <QtMoc Include="MyGradientLabel.h" />
     <ClInclude Include="PolygonOperator.h" />
     <ClInclude Include="publicElement.h" />
-    <QtMoc Include="DialogEdgeAdd.h" />
-    <QtMoc Include="DialogAddForces.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="MatrixSolver.cu" />

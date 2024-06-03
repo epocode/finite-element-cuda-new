@@ -64,12 +64,6 @@
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DialogAddForces.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DialogEdgeAdd.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MshInformation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -135,20 +129,8 @@
     <QtUic Include="MainWindow.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtUic Include="DialogAddForces.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtUic Include="DialogEdgeAdd.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="DialogAddForces.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="DialogEdgeAdd.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="Controller.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -178,9 +160,6 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MshInformation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="publicElement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -213,6 +192,9 @@
     </ClInclude>
     <ClInclude Include="cusolver_utils.h">
       <Filter>Header Files\calculate</Filter>
+    </ClInclude>
+    <ClInclude Include="MshInformation.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
