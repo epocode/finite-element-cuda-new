@@ -48,8 +48,6 @@ void UniformForceOperator::mousePressEvent(QMouseEvent* event)
 void UniformForceOperator::mouseMoveEvent(QMouseEvent* event)
 {
 	QPointF point = view->mapToScene(event->pos());
-	// 更新坐标显示标签
-	view->coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
 }
 
 void UniformForceOperator::keyPressEvent(QKeyEvent* event)

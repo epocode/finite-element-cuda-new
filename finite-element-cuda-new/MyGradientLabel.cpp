@@ -1,10 +1,10 @@
-#include "MyGradientLabel.h"
+ï»¿#include "MyGradientLabel.h"
 #include <QPainter>
 #include <QGraphicsView>
 MyGradientLabel::MyGradientLabel(QWidget *parent = nullptr)
 	: QLabel(parent)
 {
-	setFixedSize(30, 150);
+	setFixedSize(40, 150);
 }
 
 MyGradientLabel::~MyGradientLabel()
@@ -15,11 +15,12 @@ void MyGradientLabel::paintEvent(QPaintEvent * event)
     QPainter painter(this);
     QLinearGradient linearGradient(rect().topLeft(), rect().bottomLeft());
 
-    // ÉèÖÃ½¥±äµÄÑÕÉ«ºÍÎ»ÖÃ
-    linearGradient.setColorAt(0, Qt::red);    // ½¥±ä¿ªÊ¼´¦µÄÑÕÉ«
-    linearGradient.setColorAt(0.5, Qt::yellow); // ÖĞ¼äÎ»ÖÃµÄÑÕÉ«
-    linearGradient.setColorAt(1, Qt::green);  // ½¥±ä½áÊø´¦µÄÑÕÉ«
+    // è®¾ç½®æ¸å˜çš„é¢œè‰²å’Œä½ç½®
+    linearGradient.setColorAt(0, Qt::red);    // æ¸å˜å¼€å§‹å¤„çš„é¢œè‰²
+    linearGradient.setColorAt(0.33, Qt::yellow); // ä¸­é—´ä½ç½®çš„é¢œè‰²
+    linearGradient.setColorAt(0.66, Qt::green);  // æ¸å˜ç»“æŸå¤„çš„é¢œè‰²
+    linearGradient.setColorAt(1, Qt::blue);
 
-    // Ê¹ÓÃ½¥±äÉ«×÷Îª»­Ë¢Ìî³ä
+    // ä½¿ç”¨æ¸å˜è‰²ä½œä¸ºç”»åˆ·å¡«å……
     painter.fillRect(rect(), linearGradient);
 }

@@ -72,3 +72,13 @@ void Controller::generateMatrixes(double E, double v, double t)
 	CalcTools::generateMatrixes(E, v, t);
 }
 
+void Controller::generateColorMap()
+{
+	mshInfo.generateColorMap();
+}
+
+double Controller::getColorValue(double normalizedStressValue)
+{
+	return mshInfo.getColorValue(normalizedStressValue);
+}
+

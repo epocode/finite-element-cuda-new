@@ -72,8 +72,6 @@ void PolygonOperator::mousePressEvent(QMouseEvent* event)
 void PolygonOperator::mouseMoveEvent(QMouseEvent* event)
 {
     QPointF point = view->mapToScene(event->pos());
-    // 更新坐标显示标签
-    view->coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
     if (!view->points.isEmpty()) {
             QPointF point = view->mapToScene(event->pos());
             bool found = view->isCloseToFirstPoint(point);

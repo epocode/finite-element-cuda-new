@@ -1,7 +1,7 @@
 #pragma once
 #include <QString>
 #include <QMouseEvent>
-#include <QKeyEvent>;
+#include <QKeyEvent>
 
 class AbstractGraphicsviewOperator
 {

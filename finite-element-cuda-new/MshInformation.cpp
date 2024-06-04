@@ -13,9 +13,16 @@
 #include "CalcTools.h"
 #include <fstream>
 #include <iostream>
+#include <queue>
 extern Circle circle;
 
-MshInformation::MshInformation() {}
+MshInformation::MshInformation() {
+    this->E = -1;
+    this->v = -1;
+    this->t = -1;
+    this->lc = -1;
+    this->triangleIndex = -1;
+}
 
 vector<int> MshInformation::getPointTags(int i) {
     vector<int> tags;
@@ -85,6 +92,8 @@ void MshInformation::clearAll()
     this->forces.clear();
     this->edgeInfos.clear();
     this->mechanicBehaviors.clear();
+    this->normalizedStressRanges.clear();
+    this->colorMap.clear();
 
 }
 
@@ -146,11 +155,17 @@ void MshInformation::createMsh()
 void MshInformation::saveMsh(bool& success, QString& filePath) {
     if (!this->filePath.isEmpty()) {
         gmsh::write(this->filePath.toStdString());
+        success = true;
+        filePath = this->filePath;
         return;
     }
     QString fileName = QFileDialog::getSaveFileName(nullptr,
         QObject::tr("保存文件"), "",
         QObject::tr("文本文件 (*.msh);;所有文件 (*)"));
+    if (fileName.isEmpty()) {
+        success = false;
+        return;
+    }
     if (!fileName.endsWith(".msh", Qt::CaseInsensitive)) {
         fileName += ".msh";
     }
@@ -161,14 +176,13 @@ void MshInformation::saveMsh(bool& success, QString& filePath) {
         file.close(); // 关闭文件
         filePath = fileName;
         success = true;
+        this->filePath = fileName;
+        gmsh::write(this->filePath.toStdString());
     }
     else {
-        return;
         success = false;
-        qDebug() << "文件创建失败";
+        return;
     }
-    this->filePath = fileName;
-    gmsh::write(this->filePath.toStdString());
 }
 
 bool MshInformation::loadMsh(QString &filePath)
@@ -182,7 +196,6 @@ bool MshInformation::loadMsh(QString &filePath)
         return true;
     }
     else {
-        QMessageBox::warning(nullptr, QObject::tr("警告"), QObject::tr("打开文件失败"));
         return false;
     }
 }
@@ -296,6 +309,10 @@ void MshInformation::saveConstraint(bool& success, QString& filePath)
     QString fileName = QFileDialog::getSaveFileName(nullptr,
         QObject::tr("保存约束"), "",
         QObject::tr("文本文件 (*.json);;所有文件 (*)"));
+    if (fileName.isEmpty()) {
+        success = false;
+        return;
+    }
     if (!fileName.endsWith(".json", Qt::CaseInsensitive)) {
         fileName += ".json";
     }
@@ -341,6 +358,7 @@ void MshInformation::loadConstraint(bool& success, QString& filePath)
         QFile file(fileName);
         if (!file.open(QIODevice::ReadOnly)) {
             qWarning("无法打开文件");
+            success = false;
             return;
         }
         QByteArray jsonData = file.readAll();
@@ -349,6 +367,7 @@ void MshInformation::loadConstraint(bool& success, QString& filePath)
         QJsonDocument doc = QJsonDocument::fromJson(jsonData);
         if (!doc.isObject()) {
             qWarning("JSON格式错误");
+            success = false;
             return;
         }
         QJsonObject jsonObject = doc.object();
@@ -373,9 +392,9 @@ void MshInformation::loadConstraint(bool& success, QString& filePath)
             edgeInfo.yFixed = obj["yFixed"].toBool();
             this->edgeInfos.push_back(edgeInfo);
         }
+        success = true;
     }
     else {
-        QMessageBox::warning(nullptr, QObject::tr("警告"), QObject::tr("打开文件失败"));
         success = false;
     }
 }
@@ -429,6 +448,75 @@ void MshInformation::saveMatrixes()
         std::cerr << "无法打开文件" << std::endl;
     }
 
+}
+
+void MshInformation::generateColorMap()
+{
+    priority_queue<double, vector<double>, greater<double>> stressQueue;
+    vector<double> stressList;
+    vector<double> normalizedStressList;
+    int totalCount = 0;
+    int rangeCount = 1;
+    int cutNumber = 100;
+    double normalizedRangeLength = 1.0 / cutNumber;
+    for (const MechanicBehavior &mechanicBehavior : this->mechanicBehaviors) {
+        stressQueue.push(mechanicBehavior.equalStress);
+        totalCount++;
+    }
+    for (int i = 0; i < totalCount; i++) {
+        stressList.push_back(stressQueue.top());
+        stressQueue.pop();
+    }
+    double max = stressList[stressList.size() - 1];
+    double min = stressList[0];
+    double totalLength = max - min;
+    for (int i = 0; i < totalCount; i++) {
+        double normalizedStress = (stressList[i] - min) / (max - min);
+        normalizedStressList.push_back(normalizedStress);
+    }
+    double curValue = normalizedRangeLength;
+    double mapStart = 0;
+    normalizedStressRanges.push_back(0);
+    colorMap[0] = 0;
+
+    for (int i = 1; i < totalCount; i++) {
+        double curStress = normalizedStressList[i];
+        if (curStress >= curValue) {
+            //将区间有端点映射到目标端点
+            if (curStress == 1) {
+                colorMap[1] = 1;
+                normalizedStressRanges.push_back(1);
+                break;
+            }
+            while (curStress >= curValue + normalizedRangeLength) {
+                curValue += normalizedRangeLength;
+            }
+            double ratio = (double)rangeCount / (double)totalCount;
+            colorMap[curValue] = mapStart + ratio;
+            normalizedStressRanges.push_back(curValue);
+            curValue += normalizedRangeLength;
+            mapStart += ratio;
+            rangeCount = 1;
+            continue;
+        }
+        rangeCount++;
+    }
+    
+}
+
+double MshInformation::getColorValue(double normalizedStressValue)
+{
+    if (normalizedStressValue == 1) {
+        return 1;
+    }
+    for (int i = 0; i < normalizedStressRanges.size() - 1; i++) {
+        if (normalizedStressValue >= normalizedStressRanges[i] && normalizedStressValue < normalizedStressRanges[i + 1]) {
+            double ratio = (normalizedStressValue - normalizedStressRanges[i]) / (normalizedStressRanges[i + 1] - normalizedStressRanges[i]);
+            double res = colorMap[normalizedStressRanges[i]] + ratio * (colorMap[normalizedStressRanges[i + 1]] - colorMap[normalizedStressRanges[i]]);
+            return res;
+        }
+    }
+    return 1;
 }
 
 

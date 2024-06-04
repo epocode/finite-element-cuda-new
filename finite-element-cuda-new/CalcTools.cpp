@@ -15,7 +15,7 @@ extern MshInformation mshInfo;
 namespace CalcTools {
     bool calcKMatrix() {
         //计算k矩阵
-        for (int index = 0; index < mshInfo.elementTags[mshInfo.triangleIndex].size(); index++) {
+         for (int index = 0; index < mshInfo.elementTags[mshInfo.triangleIndex].size(); index++) {
             vector<int> nodeTags = mshInfo.getPointTags(index);
             int i = mshInfo.tagMap[nodeTags[0]];
             int j = mshInfo.tagMap[nodeTags[1]];
@@ -171,8 +171,8 @@ namespace CalcTools {
             double epsilonX = mechanicBehavoir.strain(0, 0);
             double epsilonY = mechanicBehavoir.strain(1, 0);
             double tau = mechanicBehavoir.strain(2, 0);
-            mechanicBehavoir.equalStrain = sqrt(2 * (pow(epsilonX - epsilonY, 2) + epsilonY * epsilonY + epsilonX * epsilonX
-                + 6 * tau * tau) / 3);
+            mechanicBehavoir.equalStrain = sqrt(2.0 / 3.0 * (pow(epsilonX , 2) + pow(epsilonY ,2) - epsilonX * epsilonY
+                + 3 * tau * tau));
             Eigen::MatrixXd D(3, 3);
             D << 1, mshInfo.v, 0,
                 mshInfo.v, 1, 0,
@@ -184,7 +184,7 @@ namespace CalcTools {
             sigmaX = mechanicBehavoir.stress(0, 0);
             sigmaY = mechanicBehavoir.stress(1, 0);
             tau = mechanicBehavoir.stress(2, 0);
-            mechanicBehavoir.equalStress = sqrt(sigmaX * sigmaX - sigmaX * sigmaY + sigmaY * sigmaY + 3 * tau * tau);
+            mechanicBehavoir.equalStress = sqrt(pow(sigmaX,2) + pow(sigmaY, 2) - sigmaX * sigmaY + 3 * tau * tau);
             mshInfo.mechanicBehaviors.push_back(mechanicBehavoir);
         }
     }
@@ -256,33 +256,6 @@ namespace CalcTools {
                 
 
             }
-            /*for (const auto& pair : mshInfo.tagMap) {
-                int index = pair.second;
-                if (pow(mshInfo.xList[index] - x, 2) < 1e-4 && pow(mshInfo.yList[index] - y, 2) < 1e-4) {
-                    if (xFixed) {
-                        mshInfo.fMatrix(index * 2 + 0, 0) = 0;
-                        mshInfo.kMatrix(index * 2, index * 2) = 1;
-                        for (int i = 0; i < mshInfo.kMatrix.rows(); i++) {
-                            if (i == index * 2) {
-                                continue;
-                            }
-                            mshInfo.kMatrix(i, index * 2) = 0;
-                            mshInfo.kMatrix(index * 2, i) = 0;
-                        }
-                    }
-                    if (yFixed) {
-                        mshInfo.fMatrix(index * 2 + 1, 0) = 0;
-                        mshInfo.kMatrix(index * 2 + 1, index * 2 + 1) = 1;
-                        for (int i = 0; i < mshInfo.kMatrix.rows(); i++) {
-                            if (i == index * 2 + 1) {
-                                continue;
-                            }
-                            mshInfo.kMatrix(i, index * 2 + 1) = 0;
-                            mshInfo.kMatrix(index * 2 + 1, i) = 0;
-                        }
-                    }
-                }
-            }*/
         }
 
     }
@@ -303,6 +276,7 @@ namespace CalcTools {
                 mechanicBehavior.strain = tempMechanicBehavoir.strain;
                 mechanicBehavior.equalStress = tempMechanicBehavoir.equalStress;
                 mechanicBehavior.equalStrain = tempMechanicBehavoir.equalStrain;
+                break;
             }
         }
         if (!inTriangle) {

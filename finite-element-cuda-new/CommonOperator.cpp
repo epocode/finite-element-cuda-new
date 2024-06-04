@@ -21,8 +21,6 @@ void CommonOperator::mousePressEvent(QMouseEvent* event)
 void CommonOperator::mouseMoveEvent(QMouseEvent* event)
 {
 	QPointF point = view->mapToScene(event->pos());
-	// 更新坐标显示标签
-	view->coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
 	if (event->buttons() & Qt::LeftButton) {
 		QPointF delta = view->mapToScene(event->pos()) - view->mapToScene(view->lastMousePos);
 		view->centerOn(view->mapToScene(view->viewport()->rect().center()) - delta);

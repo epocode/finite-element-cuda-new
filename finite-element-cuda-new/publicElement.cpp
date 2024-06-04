@@ -5,4 +5,4 @@ using namespace std;
 
 Circle circle;
 vector<Coordinate> coordinates;
-MshInformation mshInfo;
+extern MshInformation mshInfo;

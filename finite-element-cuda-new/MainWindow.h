@@ -30,7 +30,7 @@ private:
     QLabel *permanentLabel;
     QLabel* paramsLabel;
     QLabel* lcValueLabel;
-    QString htmlTemplate = "<html><h1> 模型应力应变位移信息< / h1><h2>位置坐标< / h2>< p > x: %1, y : %2 < / p ><h2>位移信息< / h2><p>水平位移 : %3, 竖直位移 : %4 < / p <h2>应变信息< / h2<p>水平应变 : %5, 竖直应变 : %6, 切应变 : %7 < / p <h2>应力信息< / h2<p>水平应力 : %8, 竖直应力 : %9, 切应力 : %10 < / p < / html>";
+    QString htmlTemplate = "<html><h1> 模型应力应变位移信息</h1><h2>位置坐标</h2><p> x: %1, y : %2 </p><h2>位移信息</h2><p>水平位移 : %3, 竖直位移 : %4 </p> <h2>应变信息</h2><p>水平应变 : %5, 竖直应变 : %6, 切应变:%7 </p><p>等效应变:%8</p> <h2>应力信息</h2><p>水平应力 : %9, 竖直应力 : %10, 切应力 : %11 </p><p>等效应力:%12</p> </html>";
 
     void calcMatrixConcurrent();
     void setMyStatus(double E, double v, double t);

@@ -1,10 +1,11 @@
-#pragma once
+ï»¿#pragma once
 
 #include <vector>
 #include <unordered_map>
 #include "publicElement.h"
 #include "Eigen/Dense"
 #include <QString>
+#include <map>
 
 
 using namespace std;
@@ -13,15 +14,15 @@ class MshInformation
 {
 public:
     double E;
-    double  t;
+    double t;
     double v;
     double lc;
-    //ÎÄ¼şĞÅÏ¢
+    //æ–‡ä»¶ä¿¡æ¯
     QString filePath;
-    //ÓÃÓÚ´æ´¢curveLoopµÄĞÅÏ¢
+    //ç”¨äºå­˜å‚¨curveLoopçš„ä¿¡æ¯
     vector<int> curveLoopList;
-    //Íø¸ñµãµÄĞÅÏ¢
-    unordered_map<int, int> tagMap;//½«µãµÄindex¶ÔÓ¦¾ØÕóÖĞµÄÏÂ±ê
+    //ç½‘æ ¼ç‚¹çš„ä¿¡æ¯
+    unordered_map<int, int> tagMap;//å°†ç‚¹çš„indexå¯¹åº”çŸ©é˜µä¸­çš„ä¸‹æ ‡
 
     vector<size_t> nodeTags;//the tags of all nodes
     vector<double> coord; //the position of every nodes
@@ -35,17 +36,20 @@ public:
     vector<double> xList;
     vector<double> yList;
 
-    //¼ÆËãÊ±µÄK¾ØÕó£¬¼ÆËãÊ±µÄF¾ØÕó
+    //è®¡ç®—æ—¶çš„KçŸ©é˜µï¼Œè®¡ç®—æ—¶çš„FçŸ©é˜µ
     Eigen::MatrixXd kMatrix;
     Eigen::MatrixXd fMatrix;
     Eigen::MatrixXd X;
-    //±ß½çÁ¦
+    //è¾¹ç•ŒåŠ›
     vector<Force> forces;
-    //±ß½çÌõ¼ş
+    //è¾¹ç•Œæ¡ä»¶
     vector<EdgeInfo> edgeInfos;
 
-    //äÖÈ¾µÄÊ±ºòĞèÒªµÄĞÅÏ¢
+    //æ¸²æŸ“çš„æ—¶å€™éœ€è¦çš„ä¿¡æ¯
     vector<MechanicBehavior>  mechanicBehaviors;
+    //é¢œè‰²æ˜ å°„ç®—æ³•
+    vector<double> normalizedStressRanges;
+    map<double, double> colorMap;
 
 
     MshInformation();
@@ -64,10 +68,12 @@ public:
     void saveConstraint(bool& success, QString& filePath);
     void loadConstraint(bool& success, QString& filePath);
     void saveMatrixes();
+    void generateColorMap();
+    double getColorValue(double normalizedStressValue);
 private:
     struct ComparePair {
         bool operator()(const std::pair<double, double>& a, const std::pair<double, double>& b) const {
-            return a.first > b.first; // °´ÕÕpairµÄfirstÖµ´ÓĞ¡µ½´óÅÅĞò
+            return a.first > b.first; // æŒ‰ç…§pairçš„firstå€¼ä»å°åˆ°å¤§æ’åº
         }
     };
     struct pair_hash {

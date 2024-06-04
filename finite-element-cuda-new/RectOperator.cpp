@@ -63,10 +63,8 @@ void RectOperator::mousePressEvent(QMouseEvent* event)
 void RectOperator::mouseMoveEvent(QMouseEvent* event)
 {
     QPointF point =  view->mapToScene(event->pos());
-    // 更新坐标显示标签
-    view->coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
     if ( view->isDrawing) {
-        if (view->tempRect) {//完成了创建
+        if (view->tempRect) {
             view->myScene->removeItem((QGraphicsItem*)(view->tempRect));
             delete view->tempRect;
             view->tempRect = view->myScene->addRect(QRectF( view->rectStartPoint, point),  view->pen);

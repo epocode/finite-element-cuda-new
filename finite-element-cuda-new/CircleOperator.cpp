@@ -67,8 +67,6 @@ void CircleOperator::mousePressEvent(QMouseEvent* event)
 void CircleOperator::mouseMoveEvent(QMouseEvent* event)
 {
     QPointF point =  view->mapToScene(event->pos());
-    // 更新坐标显示标签
-    view->coordinateLabel->setText(QString("X: %1, Y: %2").arg(point.x()).arg(point.y()));
     if ( view->isDrawing) {
         QPointF endPoint =  view->mapToScene(event->pos());
         qreal radius = QLineF( view->startPoint, endPoint).length();

@@ -10,6 +10,7 @@
 #include "ConcentratedForceOperator.h"
 #include "UniformForceOperator.h"
 #include "AddConstraintOperator.h"
+#include "ForceGraphicsItem.h"
 MyGraphicsView::MyGraphicsView(QWidget* parent)
     : QGraphicsView(parent) {
     // 初始化代码
@@ -42,7 +43,8 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     layout->addWidget(colorBar);
     layout->addWidget(minGradientLabel);
     gradientBox->setLayout(layout);
-    gradientBox->move(0, 40);
+    gradientBox->move(0, 30);
+    gradientBox->setFixedWidth(80);
     gradientBox->hide();
     //设置绘图区状态
     operatorList.push_back(new CommonOperator(this));
@@ -119,6 +121,12 @@ void MyGraphicsView::mousePressEvent(QMouseEvent* event)
 
 void MyGraphicsView::mouseMoveEvent(QMouseEvent* event)
 {
+    QPointF point = mapToScene(event->pos());
+    // 更新坐标显示标签
+    coordinateLabel->setText(QString("X: %1, Y: %2")
+        .arg(point.x(), 0, 'f', 1)
+        .arg(point.y(), 0, 'f', 1));
+
     myOperator->mouseMoveEvent(event);
 }
 
@@ -173,4 +181,31 @@ void MyGraphicsView::showRenderInfo(double max, double min) {
     this->minGradientLabel->setText(QString::number(min, 'e', 1));
 }
 
+void MyGraphicsView::handleDirectForceInput(Force force) {
+    double x = force.x;
+    double y = force.y;
+    double xForce = force.xForce;
+    double yForce = force.yForce;
+    ForceGraphicsItem* arrow = new ForceGraphicsItem(nullptr, x, y, xForce, yForce, this->pen);
+    this->myScene->addItem(arrow);
+    emit addConcentratedForceSignal(x, y, xForce, yForce);
+}
+void MyGraphicsView::handleDirectConstraintInput(EdgeInfo edgeInfo) {
+    double x = edgeInfo.x;
+    double y = edgeInfo.y;
+    double xFixed = edgeInfo.xFixed;
+    double yFixed = edgeInfo.yFixed;
+    QPen tempPen = this->pen;
+    tempPen.setColor(Qt::yellow);
+    QGraphicsEllipseItem* graphicsItem = this->myScene->addEllipse(x - 0.1, y - 0.1, 0.2, 0.2, tempPen);
+    graphicsItem->setZValue(1);
+    QString msg = "成功添加约束，x:" + QString::number(x) + ", y:" + QString::number(y);
+    if (xFixed) {
+        msg += ", 水平方向设置了约束";
+    }
+    if (yFixed) {
+        msg += ", 竖直方向设置了约束";
+    }
+    emit addConstraintSignal(msg);
+}
 

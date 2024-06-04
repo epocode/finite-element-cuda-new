@@ -32,8 +32,9 @@
 #include "ForceGraphicsItem.h"
 #include <QGraphicsOpacityEffect>
 #include "UniformForceGraphicsItem.h"
+#include <QFile>
 
-extern MshInformation mshInfo;
+MshInformation mshInfo;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -43,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     //初始化一些状态
+    mshInfo = MshInformation();
     gmsh::initialize();
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(0);
@@ -199,7 +201,7 @@ void MainWindow::setToolBarStatus(ToolBarStatus status) {
 }
 void MainWindow::addPolygon()
 {
-    while (lcValue <= 0) {
+    while (mshInfo.lc <= 0) {
         bool ok;
         QString text = QInputDialog::getText(this, "lc未设置或者不合理", "请输入lc的值:", QLineEdit::Normal, "", &ok);
         if (!ok) {
@@ -218,7 +220,7 @@ void MainWindow::addPolygon()
 
 void MainWindow::addRect()
 {
-    while (lcValue <= 0) {
+    while (mshInfo.lc <= 0) {
         bool ok;
         QString text = QInputDialog::getText(this, "lc未设置或者不合理", "请输入lc的值:", QLineEdit::Normal, "", &ok);
         if (!ok) {
@@ -237,7 +239,7 @@ void MainWindow::addRect()
 
 void MainWindow::addCircle()
 {
-    while (lcValue <= 0) {
+    while (mshInfo.lc <= 0) {
         bool ok;
         QString text = QInputDialog::getText(this, "lc未设置或者不合理", "请输入lc的值:", QLineEdit::Normal, "", &ok);
         if (!ok) {
@@ -450,6 +452,12 @@ void MainWindow::openConstraint()//装载约束条件的数据
     Controller::loadConstraint(success, filePath);
     this->calcAction->setEnabled(true);
     if (success) {
+        for (Force &force : mshInfo.forces) {
+            ui->graphicsView->handleDirectForceInput(force);
+        }
+        for (EdgeInfo &edgeInfo : mshInfo.edgeInfos) {
+            ui->graphicsView->handleDirectConstraintInput(edgeInfo);
+        }
         ui->outputEdit->append("成功加载约束信息，位置：" + filePath);
     }
     else {
@@ -461,7 +469,7 @@ void MainWindow::openConstraint()//装载约束条件的数据
 void MainWindow::calcMatrix()//计算k，f，uv矩阵
 {
     ui->progressBar->setRange(0, 0);
-    QtConcurrent::run(&MainWindow::calcMatrixConcurrent, this);
+    (void)QtConcurrent::run(&MainWindow::calcMatrixConcurrent, this);
 }
 void MainWindow::calcMatrixConcurrent()//多线程计算矩阵
 {
@@ -488,40 +496,60 @@ void MainWindow::setLcValue(double lc)
 {
     if (lc < 0) {
         lcValueLabel->setText("lc未设置");
-        lcValue = -1;
+        mshInfo.lc = -1;
     }
     else {
         lcValueLabel->setText("lc:" + QString::number(lc));
-        lcValue = lc;
+        mshInfo.lc = lc;
     }
 }
 
+
+struct ColorPoint {
+    double position;
+    QColor color;
+};
 void MainWindow::render()//渲染
 {
-    CalcTools::calcStressStrain();
     double min = DBL_MAX;
     double max = -DBL_MAX;
-
+    QFile file("应力分布文件.txt");
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
     CalcTools::getExtreme(min , max);
     ui->graphicsView->showRenderInfo(max, min);
     for (MechanicBehavior info: mshInfo.mechanicBehaviors) {
         double stressValue = info.equalStress; // 这里获取当前三角形网格的应力值
         double normalizedStress = (stressValue - min) / (max - min);
-        double factor = 0.5; // 可以调整这个因子来改变颜色的深浅
-        int red = 0;
-        int green = 0;
-        int blue = 0;
-        if (normalizedStress <= 0.5) {
-            green = static_cast<int>(255 * (1 - normalizedStress * 2));
-            red = static_cast<int>(255 * (1 - factor * (1 - normalizedStress * 2)));
-            blue = 0;
+        normalizedStress = Controller::getColorValue(normalizedStress);
+        file.write(QString::number(normalizedStress).toUtf8() + "\n");
+        // 创建颜色点数组
+        const ColorPoint colorPoints[] = {
+            {0.0, QColor(Qt::blue)},
+            {0.33, QColor(Qt::green)},
+            {0.66, QColor(Qt::yellow)},
+            {1.0, QColor(Qt::red)}
+        };
+
+        // 查找两个最接近的颜色点
+        ColorPoint lower = colorPoints[0];
+        ColorPoint upper = colorPoints[sizeof(colorPoints) / sizeof(ColorPoint) - 1];
+        for (int i = 0; i < sizeof(colorPoints) / sizeof(ColorPoint) - 1; ++i) {
+            if (normalizedStress >= colorPoints[i].position && normalizedStress <= colorPoints[i + 1].position) {
+                lower = colorPoints[i];
+                upper = colorPoints[i + 1];
+                break;
+            }
         }
-        else {
-            green = static_cast<int>(255 * (1 - factor * ((normalizedStress - 0.5) * 2)));
-            red = 255;
-            blue = 0;
-        }
+
+        // 计算两个颜色点之间的插值
+        double ratio = (normalizedStress - lower.position) / (upper.position - lower.position);
+        int red = lower.color.red() + ratio * (upper.color.red() - lower.color.red());
+        int green = lower.color.green() + ratio * (upper.color.green() - lower.color.green());
+        int blue = lower.color.blue() + ratio * (upper.color.blue() - lower.color.blue());
+
+        
         QColor color(red, green, blue);
+        //color.setAlpha(255);
         QBrush brush;
         brush.setStyle(Qt::SolidPattern);
         brush.setColor(color);
@@ -544,7 +572,13 @@ void MainWindow::clear()//清空所有信息
     this->renderAction->setEnabled(false);
     ui->progressBar->setValue(0);
     mshInfo.clearAll();
+    ui->graphicsView->gradientBox->hide();
+    
+
+    gmsh::initialize();
+    this->setMyStatus(18000000000, 0.25, 1);
     this->setMyStatus(0, 0);
+    setLcValue(-1);
 }
 
 void MainWindow::handleDoubleClick(QPointF  point)//点击网格中的点，然后显示出相关信息
@@ -555,9 +589,19 @@ void MainWindow::handleDoubleClick(QPointF  point)//点击网格中的点，然�
         double u;
         double v;
         if (CalcTools::getPointInfos(x, y, mechanicBehavior, u , v)) {
-            QString htmlContent = htmlTemplate.arg(x).arg(y).arg(mechanicBehavior.stress(0, 0)).arg(mechanicBehavior.stress(1, 0)).
-                arg(mechanicBehavior.stress(2, 0)).arg(mechanicBehavior.strain(0, 0)).arg(mechanicBehavior.strain(1, 0)).arg(mechanicBehavior.strain(2, 0)).
-                arg(u).arg(v);
+            
+            double min = DBL_MAX;
+            double max = -DBL_MAX;
+            CalcTools::getExtreme(min, max);
+            double stressValue = mechanicBehavior.equalStress; // 这里获取当前三角形网格的应力值
+            double normalizedStress = (stressValue - min) / (max - min);
+            normalizedStress = Controller::getColorValue(normalizedStress);
+            
+            
+            QString htmlContent = htmlTemplate.arg(x).arg(y).arg(u).arg(v).arg(mechanicBehavior.strain(0, 0))
+                .arg(mechanicBehavior.strain(1, 0)).arg(mechanicBehavior.strain(2, 0)).arg(mechanicBehavior.equalStrain)
+                .arg(mechanicBehavior.stress(0, 0)).arg(mechanicBehavior.stress(1, 0)).
+                arg(mechanicBehavior.stress(2, 0)).arg(mechanicBehavior.equalStress);
             QTextCursor cursor = ui->outputEdit->textCursor();
             cursor.movePosition(QTextCursor::End);
             ui->outputEdit->append(htmlContent);
@@ -594,6 +638,10 @@ void MainWindow::updateProgressBar(int value)
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(value);
     ui->outputEdit->append("计算完成");
+    //计算应力应变
+    CalcTools::calcStressStrain();
+    //计算完成后就开始实现颜色映射算法
+    Controller::generateColorMap();
 }
 
 void MainWindow::showConcentratedForceInfo(double x, double y, double xForce, double yForce)

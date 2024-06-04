@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <QObject>
 #include <vector>
 #include <publicElement.h>
@@ -10,7 +10,7 @@ public:
 	Controller(QObject *parent);
 	~Controller();
 public:
-	//¶¨Òå¾²Ì¬·½·¨ÓÃÓÚ´¦ÀíÇëÇó
+	//å®šä¹‰é™æ€æ–¹æ³•ç”¨äºå¤„ç†è¯·æ±‚
 	static void addRectToMsh(double x, double y, double width, double height);
 	static void addCircleToMsh(double x, double y, double radius);
 	static void addPolygonToMsh(vector<Coordinate> points);
@@ -23,4 +23,6 @@ public:
 	static void saveConstraint(bool& success, QString& filePath);
 	static void loadConstraint(bool& success, QString& filePath);
 	static void generateMatrixes(double E, double v, double t);
+	static void generateColorMap();
+	static double getColorValue(double normalizedStressValue);
 };
