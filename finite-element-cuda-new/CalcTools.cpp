@@ -7,7 +7,10 @@
 #include "publicElement.h"
 #include <math.h>
 #include <cfloat>
-
+#include <QColor>
+#include <algorithm>
+#include <Map>
+#include <queue>
 
 using namespace Eigen;
 extern MshInformation mshInfo;
@@ -116,6 +119,13 @@ namespace CalcTools {
         double s = getArea(p1, p2, p3);
         return (s1 + s2 + s3 - s) < 1e-5;
     }
+    bool isInTriangle(double px, double py, double ax, double ay, double bx, double by, double cx, double cy) {
+        double originArea = abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay));
+        double area1 = abs((ax - px) * (by - py) - (bx - px) * (ay - py));
+        double area2 = abs((bx - px) * (cy - py) - (cx - px) * (by - py));
+        double area3 = abs((cx - px) * (ay - py) - (ax - px) * (cy - py));
+        return (abs(area1 + area2 + area3 - originArea) <= 1e-10);
+    }
 
     double getArea(Point p1, Point p2, Point p3) {
         double a = getDist(p1, p2);
@@ -146,6 +156,9 @@ namespace CalcTools {
             int index2 = mshInfo.tagMap[mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex][i * 3 + 1]];
             int index3 = mshInfo.tagMap[mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex][i * 3 + 2]];
             MechanicBehavior mechanicBehavoir;
+            mechanicBehavoir.index1 = index1;
+            mechanicBehavoir.index2 = index2;
+            mechanicBehavoir.index3 = index3;
             mechanicBehavoir.p1.x = mshInfo.xList[index1];
             mechanicBehavoir.p1.y = mshInfo.yList[index1];
             mechanicBehavoir.p2.x = mshInfo.xList[index2];
@@ -331,45 +344,161 @@ namespace CalcTools {
         }
         return true;
     }
+    void evenDistribute(vector<double> valueList, vector<double>& rangeList, map<double, double>& colorMap) {
+        int totalCount = valueList.size();
+        int rangeCount = 1;
+        int cutNumber = 100;
+        double normalizedRangeLength = 1.0 / cutNumber;
+        double curValue = normalizedRangeLength;
+        double mapStart = 0;
+        rangeList.push_back(0);
+        colorMap[0] = 0;
 
-    double distance(double x1, double y1, double x2, double y2) {
-        return std::hypot(x2 - x1, y2 - y1);
+        for (int i = 1; i < totalCount; i++) {
+            double tempValue = valueList[i];
+            if (tempValue >= curValue) {
+                //将区间有端点映射到目标端点
+                if (tempValue == 1) {
+                    colorMap[1] = 1;
+                    rangeList.push_back(1);
+                    break;
+                }
+                while (tempValue >= curValue + normalizedRangeLength) {
+                    curValue += normalizedRangeLength;
+                }
+                double ratio = (double)rangeCount / (double)totalCount;
+                colorMap[curValue] = mapStart + ratio;
+                rangeList.push_back(curValue);
+                curValue += normalizedRangeLength;
+                mapStart += ratio;
+                rangeCount = 1;
+                continue;
+            }
+            rangeCount++;
+        }
     }
-    double pointToSegmentDistance(double ax, double ay, double bx, double by, double cx, double cy) {
-        double abx = bx - ax;
-        double aby = by - ay;
-        double acx = cx - ax;
-        double acy = cy - ay;
-        double bcx = cx - bx;
-        double bcy = cy - by;
-
-        // 计算投影长度t
-        double t = (acx * abx + acy * aby) / (abx * abx + aby * aby);
-
-        // 如果垂足落在线段AB上
-        if (t >= 0 && t <= 1) {
-            // 计算垂足坐标
-            double px = ax + t * abx;
-            double py = ay + t * aby;
-            // 返回点C到垂足的距离
-            return distance(cx, cy, px, py);
+    void getUV(double x, double y, MechanicBehavior mechanicBehavoir, double& uValue, double& vValue) {
+        Point p1, p2, p3;
+        p1 = mechanicBehavoir.p1;
+        p2 = mechanicBehavoir.p2;
+        p3 = mechanicBehavoir.p3;
+        unordered_map<int, double> a, b, c, N;
+        vector<int> list;
+        int index1 = mechanicBehavoir.index1;
+        int index2 = mechanicBehavoir.index2;
+        int index3 = mechanicBehavoir.index3;
+        list.push_back(index1);
+        list.push_back(index2);
+        list.push_back(index3);
+        calcABC(a, b, c, index1, index2, index3);
+        double A = (mshInfo.yList[index3] * (mshInfo.xList[index2] - mshInfo.xList[index1]) +
+            mshInfo.yList[index2] * (mshInfo.xList[index1] - mshInfo.xList[index3]) +
+            mshInfo.yList[index1] * (mshInfo.xList[index3] - mshInfo.xList[index2])) / 2;
+        for (int i = 0; i < 3; i++) {
+            N[list[i]] = (a[list[i]] + b[list[i]] * x + c[list[i]] * y) / 2 / A;
         }
 
-        // 否则返回点C到A或B的距离中较小的一个
-        return std::fmin(distance(ax, ay, cx, cy), distance(bx, by, cx, cy));
+        Eigen::MatrixXd uviMatrix(6, 1);
+        uviMatrix(0, 0) = mshInfo.X(2 * index1, 0);
+        uviMatrix(1, 0) = mshInfo.X(2 * index1 + 1, 0);
+        uviMatrix(2, 0) = mshInfo.X(2 * index2, 0);
+        uviMatrix(3, 0) = mshInfo.X(2 * index2 + 1, 0);
+        uviMatrix(4, 0) = mshInfo.X(2 * index3, 0);
+        uviMatrix(5, 0) = mshInfo.X(2 * index3 + 1, 0);
+        Eigen::MatrixXd nMatrix = Eigen::MatrixXd::Zero(2, 6);
+        nMatrix(0, 0) = N[index1];
+        nMatrix(0, 2) = N[index2];
+        nMatrix(0, 4) = N[index3];
+        nMatrix(1, 1) = N[index1];
+        nMatrix(1, 3) = N[index2];
+        nMatrix(1, 5) = N[index3];
+        Eigen::MatrixXd uvMatrix = nMatrix * uviMatrix;
+        uValue = uvMatrix.coeff(0, 0);
+        vValue = uvMatrix.coeff(1, 0);
     }
-    extern "C" void solveMatrix(Eigen::MatrixXd & kMatrix, Eigen::MatrixXd & fMatrix, Eigen::MatrixXd & uvMatrix);
-    void generateMatrixes(double E, double v, double t)
-    {
-        mshInfo.E = E;
-        mshInfo.v = v;  
-        mshInfo.t = t;
-        calcKMatrix();
-        calcFMatrix();
-        handleEdge();
-        //mshInfo.X = mshInfo.kMatrix.colPivHouseholderQr().solve(mshInfo.fMatrix);
-        solveMatrix(mshInfo.kMatrix, mshInfo.fMatrix, mshInfo.X);
-        mshInfo.saveMatrixes();
+
+
+double getMappedValue(double value, const vector<double>& rangeList, map<double, double>& colorMap) {
+    if (value == 1) {
+        return 1;
     }
+    for (int i = 0; i < rangeList.size() - 1; i++) {
+        if (value >= rangeList[i] && value < rangeList[i + 1]) {
+            double ratio = (value - rangeList[i]) / (rangeList[i + 1] - rangeList[i]);
+            double res = colorMap[rangeList[i]] + ratio * (colorMap[rangeList[i + 1]] - colorMap[rangeList[i]]);
+            return res;
+        }
+    }
+    return 1;
+}
+
+QColor getColor(double value) {
+    const ColorPoint colorPoints[] = {
+            {0.0, QColor(Qt::blue)},
+            {0.33, QColor(Qt::green)},
+            {0.66, QColor(Qt::yellow)},
+            {1.0, QColor(Qt::red)}
+    };
+
+    // 查找两个最接近的颜色点
+    ColorPoint lower = colorPoints[0];
+    ColorPoint upper = colorPoints[sizeof(colorPoints) / sizeof(ColorPoint) - 1];
+    for (int i = 0; i < sizeof(colorPoints) / sizeof(ColorPoint) - 1; ++i) {
+        if (value >= colorPoints[i].position && value <= colorPoints[i + 1].position) {
+            lower = colorPoints[i];
+            upper = colorPoints[i + 1];
+            break;
+        }
+    }
+
+    // 计算两个颜色点之间的插值
+    double ratio = (value - lower.position) / (upper.position - lower.position);
+    int red = lower.color.red() + ratio * (upper.color.red() - lower.color.red());
+    int green = lower.color.green() + ratio * (upper.color.green() - lower.color.green());
+    int blue = lower.color.blue() + ratio * (upper.color.blue() - lower.color.blue());
+
+
+    QColor color(red, green, blue);
+    return color;
+}
+double distance(double x1, double y1, double x2, double y2) {
+    return std::hypot(x2 - x1, y2 - y1);
+}
+double pointToSegmentDistance(double ax, double ay, double bx, double by, double cx, double cy) {
+    double abx = bx - ax;
+    double aby = by - ay;
+    double acx = cx - ax;
+    double acy = cy - ay;
+    double bcx = cx - bx;
+    double bcy = cy - by;
+
+    // 计算投影长度t
+    double t = (acx * abx + acy * aby) / (abx * abx + aby * aby);
+
+    // 如果垂足落在线段AB上
+    if (t >= 0 && t <= 1) {
+        // 计算垂足坐标
+        double px = ax + t * abx;
+        double py = ay + t * aby;
+        // 返回点C到垂足的距离
+        return distance(cx, cy, px, py);
+    }
+
+    // 否则返回点C到A或B的距离中较小的一个
+    return std::fmin(distance(ax, ay, cx, cy), distance(bx, by, cx, cy));
+}
+extern "C" void solveMatrix(Eigen::MatrixXd & kMatrix, Eigen::MatrixXd & fMatrix, Eigen::MatrixXd & uvMatrix);
+void generateMatrixes(double E, double v, double t)
+{
+    mshInfo.E = E;
+    mshInfo.v = v;  
+    mshInfo.t = t;
+    calcKMatrix();
+    calcFMatrix();
+    handleEdge();
+    //mshInfo.X = mshInfo.kMatrix.colPivHouseholderQr().solve(mshInfo.fMatrix);
+    solveMatrix(mshInfo.kMatrix, mshInfo.fMatrix, mshInfo.X);
+    mshInfo.saveMatrixes();
+}
 
 }

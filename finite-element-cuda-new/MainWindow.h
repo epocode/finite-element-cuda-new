@@ -4,6 +4,7 @@
 #include <QPen>
 #include "publicElement.h"
 #include <QLabel>
+#include <QGraphicsItem>
 
 namespace Ui {
 class MainWindow;
@@ -25,7 +26,9 @@ private:
     };
 private:
     Ui::MainWindow *ui;
-    QAction *renderAction;
+    QAction *renderStressAction;
+    QAction* renderUAction;
+    QAction* renderVAction;
     QAction *calcAction;
     QLabel *permanentLabel;
     QLabel* paramsLabel;
@@ -36,6 +39,15 @@ private:
     void setMyStatus(double E, double v, double t);
     void setMyStatus(double meshNums, double pointNums);
     void setLcValue(double lc);
+public: //这里用来保存场景中的项目
+    double stressEdges[2];
+    double uEdges[2];
+    double vEdges[2];
+    QList<QGraphicsItem*> originItems;
+    QList<QGraphicsItem*> stressItems;
+    QList<QGraphicsItem*> uItems;
+    QList<QGraphicsItem*> vItems;
+    int curItemsFlag;
 private:
     //工具栏
     QToolBar* graphicToolBar;
@@ -57,8 +69,10 @@ signals:
     void updateProgressBarSignal(int value);
     void enableRenderActionSignal(bool enable);
     void sendTextToGraphicViewSignal(const QString& text);
-private:
+public:
     void setToolBarStatus(ToolBarStatus status);
+    void generateAllColorMap();
+    void clearItems();
 private slots:
     void onComboBoxIndexChanged(int index);
     void clear();
@@ -79,7 +93,9 @@ private slots:
     void addUniformForce();
     void addEdges();
     void calcMatrix();
-    void render();
+    void renderStress();
+    void renderU();
+    void renderV();
     void saveMsh();
     void openMsh();
     void showInfoFromSignal(QString msg);
@@ -90,7 +106,7 @@ private slots:
     void setRenderEnable(bool enable);
     void updateProgressBar(int value);
     void showConcentratedForceInfo(double x, double y, double xForce, double yForce);
-    void showUniformForceInfo(double startX, double startY, double endX, double endY, double xForce, double yForce);
+    void showUniformForceInfo(double startX, double startY, double endX, double endY, double xForce, double yForce, vector<Force> forces);
 
 };
 

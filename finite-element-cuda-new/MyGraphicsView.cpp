@@ -11,15 +11,16 @@
 #include "UniformForceOperator.h"
 #include "AddConstraintOperator.h"
 #include "ForceGraphicsItem.h"
+#include "InfiniteGraphicsScene.h"
 MyGraphicsView::MyGraphicsView(QWidget* parent)
     : QGraphicsView(parent) {
     // 初始化代码
-    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    setTransformationAnchor(QGraphicsView::NoAnchor);
     setMouseTracking(true);
-    setupDragMode();
+    //setDragMode(QGraphicsView::ScrollHandDrag); 
     this->scale(40, 40);
     this->pen.setWidthF(pen.widthF() / this->transform().m11());
-    myScene = new QGraphicsScene;
+    myScene = new InfiniteGraphicsScene(this, pen);
     this->setScene(myScene);
     this->scale(1, -1);
     //显示坐标值
@@ -46,6 +47,12 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     gradientBox->move(0, 30);
     gradientBox->setFixedWidth(80);
     gradientBox->hide();
+    //设置缩放倍数的数值显示
+    scaleLabel = new QLabel("100%", this);
+    scaleLabel->move(200, 0);
+    scaleLabel->setMargin(5);
+    scaleLabel->setStyleSheet("QLabel{ color: yellow;}");
+    scaleLabel->setFixedSize(50, 30);
     //设置绘图区状态
     operatorList.push_back(new CommonOperator(this));
     operatorList.push_back(new PolygonOperator(this));
@@ -59,7 +66,7 @@ MyGraphicsView::MyGraphicsView(QWidget* parent)
     this->setRenderHint(QPainter::Antialiasing);
     this->setRenderHint(QPainter::SmoothPixmapTransform);
     this->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
-    
+    setRenderHint(QPainter::Antialiasing);
 }
 
 void MyGraphicsView::setMode(Mode mode) {
@@ -96,13 +103,14 @@ void MyGraphicsView::wheelEvent(QWheelEvent* event) {
     const double scaleFactor = 1.15; // 缩放的比例因子
     QPoint scrollAmount = event->angleDelta();
     if (scrollAmount.y() > 0) {
-        // 向上滚动鼠标滚轮，放大
         scale(scaleFactor, scaleFactor);
     }
     else {
-        // 向下滚动鼠标滚轮，缩小
         scale(1.0 / scaleFactor, 1.0 / scaleFactor);
     }
+    qreal currentScaleFactor = this->transform().m11();
+    int zoomPercentage = static_cast<int>(currentScaleFactor * 100);
+    scaleLabel->setText(QString::number(zoomPercentage) + "%");
 }
 
 
@@ -116,6 +124,7 @@ void MyGraphicsView::handleCoordinateInput(QString text)
 void MyGraphicsView::mousePressEvent(QMouseEvent* event)
 {
     myOperator->mousePressEvent(event);
+    QGraphicsView::mousePressEvent(event);
 }
 
 
@@ -128,18 +137,15 @@ void MyGraphicsView::mouseMoveEvent(QMouseEvent* event)
         .arg(point.y(), 0, 'f', 1));
 
     myOperator->mouseMoveEvent(event);
+    QGraphicsView::mouseMoveEvent(event);
 }
 
 
-    void MyGraphicsView::mouseReleaseEvent(QMouseEvent * event)
+void MyGraphicsView::mouseReleaseEvent(QMouseEvent * event)
 {
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-void MyGraphicsView::setupDragMode()
-{
-    setDragMode(QGraphicsView::ScrollHandDrag);
-}
 void MyGraphicsView::mouseDoubleClickEvent(QMouseEvent* event)
 {
     QPointF scenePoint = mapToScene(event->pos());
@@ -190,6 +196,8 @@ void MyGraphicsView::handleDirectForceInput(Force force) {
     this->myScene->addItem(arrow);
     emit addConcentratedForceSignal(x, y, xForce, yForce);
 }
+
+
 void MyGraphicsView::handleDirectConstraintInput(EdgeInfo edgeInfo) {
     double x = edgeInfo.x;
     double y = edgeInfo.y;
@@ -209,3 +217,11 @@ void MyGraphicsView::handleDirectConstraintInput(EdgeInfo edgeInfo) {
     emit addConstraintSignal(msg);
 }
 
+void MyGraphicsView::paintByPixel(QPointF point) {
+    QImage image(0.01, 0.01, QImage::Format_RGB32);
+    image.setPixel(0, 0, qRgb(255, 0, 0));
+    QPixmap pixmap = QPixmap::fromImage(image);
+    QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(pixmap);
+    pixmapItem->setPos(point.x(), point.y());
+    myScene->addItem(pixmapItem);
+}

@@ -6,7 +6,7 @@ MyStackedWidget::MyStackedWidget(QWidget* parent)
 	: QStackedWidget(parent)
 {
 	curMode = INIT;
-	this->focusFilter = new keyFocusFixFilter(this);
+	//this->focusFilter = new keyFocusFixFilter(this);
 	//this->installEventFilter(focusFilter);
 }
 

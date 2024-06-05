@@ -110,6 +110,7 @@
     <ClCompile Include="ConcentratedForceOperator.cpp" />
     <ClCompile Include="Controller.cpp" />
     <ClCompile Include="ForceGraphicsItem.cpp" />
+    <ClCompile Include="InfiniteGraphicsScene.cpp" />
     <ClCompile Include="keyFocusFixFilter.cpp" />
     <ClCompile Include="MshInformation.cpp" />
     <ClCompile Include="MyGradientLabel.cpp" />
@@ -134,6 +135,7 @@
     <ClInclude Include="AddConstraintOperator.h" />
     <ClInclude Include="CalcTools.h" />
     <ClInclude Include="CircleOperator.h" />
+    <QtMoc Include="InfiniteGraphicsScene.h" />
     <ClInclude Include="MshInformation.h" />
     <ClInclude Include="UniformForceOperator.h" />
     <QtMoc Include="UniformForceGraphicsItem.h" />

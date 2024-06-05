@@ -42,9 +42,9 @@ bool Controller::loadMsh(QString &filePath)
 	return mshInfo.loadMsh(filePath);
 }
 
-void Controller::addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection)
+void Controller::addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection, vector<Force> &forces)
 {
-	mshInfo.addUniformLoad(startX, startY, endX, endY, xDirection, yDirection);
+	mshInfo.addUniformLoad(startX, startY, endX, endY, xDirection, yDirection, forces);
 }
 
 void Controller::addConcentratedForce(double x, double y, double xForce, double yForce)

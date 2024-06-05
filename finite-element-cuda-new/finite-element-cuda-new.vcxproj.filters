@@ -124,6 +124,9 @@
     <ClCompile Include="CalcTools.cpp">
       <Filter>Source Files\calculate</Filter>
     </ClCompile>
+    <ClCompile Include="InfiniteGraphicsScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="MainWindow.ui">
@@ -157,6 +160,9 @@
     </QtMoc>
     <QtMoc Include="MainWindow.h">
       <Filter>Header Files\main</Filter>
+    </QtMoc>
+    <QtMoc Include="InfiniteGraphicsScene.h">
+      <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>

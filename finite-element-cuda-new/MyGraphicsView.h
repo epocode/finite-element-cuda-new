@@ -39,6 +39,7 @@ public:
 	QGroupBox* gradientBox;
 	AbstractGraphicsviewOperator* myOperator;
 	QVector<AbstractGraphicsviewOperator*> operatorList;
+	QLabel* scaleLabel;
 public:
 	MyGraphicsView(QWidget* parent = nullptr);
 	void setupDragMode();
@@ -50,6 +51,7 @@ public:
 	void showRenderInfo(double max, double min);
 	void handleDirectForceInput(Force force);
 	void handleDirectConstraintInput(EdgeInfo edgeInfo);
+	void paintByPixel(QPointF point);
 protected:
 	void wheelEvent(QWheelEvent* event) override;
 	void mousePressEvent(QMouseEvent* event) override;
@@ -66,7 +68,7 @@ signals:
 	void resetInputAreaSignal();
 	void setTipsSignal(const QString &msg);//设置输入框的提示
 	void addConcentratedForceSignal(double x, double y, double xForce, double yForce);
-	void addUniformForceSignal(double startX, double startY, double endX, double endY, double xForce, double yForce);
+	void addUniformForceSignal(double startX, double startY, double endX, double endY, double xForce, double yForce, vector<Force> forces);
 	void addConstraintSignal(QString msg);
 	void sendCalcActivate();
 };

@@ -12,7 +12,7 @@ void CommonOperator::handleCoordinateInput(QString text)
 
 void CommonOperator::mousePressEvent(QMouseEvent* event)
 {
-	QPointF point = view->mapToScene(event->pos());
+	QPointF point = event->pos();
 	if (event->button() == Qt::LeftButton) {
 		view->lastMousePos = event->pos();
 	}

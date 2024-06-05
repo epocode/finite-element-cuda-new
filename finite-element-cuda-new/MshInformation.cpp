@@ -227,7 +227,7 @@ bool checkIntersection(Point a1, Point a2, Point b1, Point b2, Point& intersecti
 
     return false; // 不相交
 }
-void MshInformation::addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection)
+void MshInformation::addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection, vector<Force> &paintForces)
 {
     Point forceStart, forceEnd;
     forceStart.x = startX;
@@ -291,6 +291,7 @@ void MshInformation::addUniformLoad(double startX, double startY, double endX, d
         force.xForce = len * xDirection;
         force.yForce = len * yDirection;
         this->forces.push_back(force);
+        paintForces.push_back(force);
     }
 }
 

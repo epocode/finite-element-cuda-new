@@ -33,6 +33,9 @@
 #include <QGraphicsOpacityEffect>
 #include "UniformForceGraphicsItem.h"
 #include <QFile>
+#include <algorithm>
+#include <Map>
+#include <queue>
 
 MshInformation mshInfo;
 
@@ -160,13 +163,21 @@ MainWindow::MainWindow(QWidget *parent)
     //可视化工具栏
     visualizeToolBar = addToolBar(tr("可视化"));
     addToolBar(Qt::LeftToolBarArea, visualizeToolBar);
-    renderAction = new QAction(tr("渲染"));
-    visualizeToolBar->addAction(renderAction);
+    renderStressAction = new QAction(tr("应力云图"));
+    renderUAction = new QAction(tr("水平位移云图"));
+    renderVAction = new QAction(tr("竖直位移云图"));
+    visualizeToolBar->addAction(renderStressAction);
+    visualizeToolBar->addAction(renderUAction);
+    visualizeToolBar->addAction(renderVAction);
     visualizeToolBar->setVisible(false);
     toolBarList.push_back(visualizeToolBar);
-    renderAction->setEnabled(false);
+    renderStressAction->setEnabled(false);
+    this->renderUAction->setEnabled(false);
+    this->renderVAction->setEnabled(false);
     setToolBarStatus(GRAPH);
-    connect(renderAction, &QAction::triggered, this, &MainWindow::render);
+    connect(renderStressAction, &QAction::triggered, this, &MainWindow::renderStress);
+    connect(renderUAction, &QAction::triggered, this, &MainWindow::renderU);
+    connect(renderVAction, &QAction::triggered, this, &MainWindow::renderV);
     //连接槽函数
     connect(ui->graphicsView, &MyGraphicsView::createPolygonSignal, this, &MainWindow::createPolygonMsh);
     connect(ui->graphicsView, &MyGraphicsView::createRectSignal, this, &MainWindow::createRectMsh);
@@ -184,6 +195,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->graphicsView, &MyGraphicsView::doubleClicked, this, &MainWindow::handleDoubleClick);
     MyStackedWidget* widget = ui->myStackedWidget;
     widget->setCurrentIndex(0);
+
+    
+
 }
 
 MainWindow::~MainWindow()
@@ -306,6 +320,7 @@ void MainWindow::setTips(const QString &msg)
     ui->tipsLabel->setText(msg);
 }
 
+
 void MainWindow::setElasticAttrib()
 {
     bool ok;
@@ -370,8 +385,9 @@ void MainWindow::paintMsh()//绘制网格(被其他槽函数调用,这是从msh�
         double y1 = mshInfo.yList[p.first];
         double x2 = mshInfo.xList[p.second];
         double y2 = mshInfo.yList[p.second];
-        this->pen.setColor(Qt::green);
-        ui->graphicsView->scene()->addLine(x1, y1, x2, y2, this->pen);
+        QPen tempPen = this->pen;
+        tempPen.setColor(Qt::green);
+        ui->graphicsView->myScene->addLine(x1, y1, x2, y2, tempPen);
     }
     ui->outputEdit->append("成功生成网格，网格数量为：" + QString::number(mshInfo.nodeTagsForTriangle[mshInfo.triangleIndex].size())
         + "网格点数量为:" + QString::number(mshInfo.tagMap.size()));
@@ -504,72 +520,254 @@ void MainWindow::setLcValue(double lc)
     }
 }
 
-
-struct ColorPoint {
-    double position;
-    QColor color;
-};
-void MainWindow::render()//渲染
+void MainWindow::generateAllColorMap()
 {
+    //this->originItems = ui->graphicsView->myScene->items();
+    //for (QGraphicsItem* graphicsItem : originItems) {
+    //    this->stressItems.append(graphicsItem);
+    //}
+    //
+    //for (QGraphicsItem* graphicsItem : originItems) {
+    //    this->uItems.append(graphicsItem);
+    //}
+    //for (QGraphicsItem* graphicsItem : originItems) {
+    //    this->vItems.append(graphicsItem);
+    //}
+    //生成应力云图
     double min = DBL_MAX;
     double max = -DBL_MAX;
-    QFile file("应力分布文件.txt");
-    file.open(QIODevice::WriteOnly | QIODevice::Text);
-    CalcTools::getExtreme(min , max);
-    ui->graphicsView->showRenderInfo(max, min);
-    for (MechanicBehavior info: mshInfo.mechanicBehaviors) {
+    CalcTools::getExtreme(min, max);
+    this->stressEdges[0] = max;
+    this->stressEdges[1] = min;
+    
+    for (MechanicBehavior info : mshInfo.mechanicBehaviors) {
         double stressValue = info.equalStress; // 这里获取当前三角形网格的应力值
         double normalizedStress = (stressValue - min) / (max - min);
         normalizedStress = Controller::getColorValue(normalizedStress);
-        file.write(QString::number(normalizedStress).toUtf8() + "\n");
-        // 创建颜色点数组
-        const ColorPoint colorPoints[] = {
-            {0.0, QColor(Qt::blue)},
-            {0.33, QColor(Qt::green)},
-            {0.66, QColor(Qt::yellow)},
-            {1.0, QColor(Qt::red)}
-        };
-
-        // 查找两个最接近的颜色点
-        ColorPoint lower = colorPoints[0];
-        ColorPoint upper = colorPoints[sizeof(colorPoints) / sizeof(ColorPoint) - 1];
-        for (int i = 0; i < sizeof(colorPoints) / sizeof(ColorPoint) - 1; ++i) {
-            if (normalizedStress >= colorPoints[i].position && normalizedStress <= colorPoints[i + 1].position) {
-                lower = colorPoints[i];
-                upper = colorPoints[i + 1];
-                break;
-            }
-        }
-
-        // 计算两个颜色点之间的插值
-        double ratio = (normalizedStress - lower.position) / (upper.position - lower.position);
-        int red = lower.color.red() + ratio * (upper.color.red() - lower.color.red());
-        int green = lower.color.green() + ratio * (upper.color.green() - lower.color.green());
-        int blue = lower.color.blue() + ratio * (upper.color.blue() - lower.color.blue());
-
-        
-        QColor color(red, green, blue);
-        //color.setAlpha(255);
+        QColor color = CalcTools::getColor(normalizedStress);
         QBrush brush;
         brush.setStyle(Qt::SolidPattern);
         brush.setColor(color);
         QPolygonF triangle;
         triangle << QPointF(info.p1.x, info.p1.y) << QPointF(info.p2.x, info.p2.y) << QPointF(info.p3.x, info.p3.y);
-        QGraphicsPolygonItem *triangleItem = new QGraphicsPolygonItem(triangle);
+        QGraphicsPolygonItem* triangleItem = new QGraphicsPolygonItem(triangle);
         triangleItem->setBrush(brush);
-        this->pen.setColor(Qt::black);
-        triangleItem->setPen(this->pen);
-        ui->graphicsView->scene()->addItem(triangleItem);
+        QPen tempPen = this->pen;
+        tempPen.setColor(Qt::black);
+        tempPen.setStyle(Qt::NoPen);
+        triangleItem->setPen(tempPen);
+        stressItems.append((QGraphicsItem*)triangleItem);
+        //ui->graphicsView->scene()->addItem(triangleItem);
     }
+
+    //生成水平位移云图
+    unordered_map<Point, double> pointMap;
+    priority_queue<double, vector<double>, greater<double>> valueQueue;
+    for (MechanicBehavior& info : mshInfo.mechanicBehaviors) {
+        double minX, minY, maxX, maxY;
+        minX = std::min({ info.p1.x, info.p2.x, info.p3.x });
+        maxX = std::max({ info.p1.x, info.p2.x, info.p3.x });
+        minY = std::min({ info.p1.y, info.p2.y, info.p3.y });
+        maxY = std::max({ info.p1.y, info.p2.y, info.p3.y });
+        for (double x = minX; x <= maxX; x += 0.1) {
+            for (double y = minY; y <= maxY; y += 0.1) {
+                if (CalcTools::isInTriangle(x, y, info.p1.x, info.p1.y, info.p2.x, info.p2.y, info.p3.x, info.p3.y)) {
+                    double u, v;
+
+                    CalcTools::getUV(x, y, info, u, v);
+                    pointMap[Point(x, y)] = u;
+                    valueQueue.push(u);
+                }
+            }
+        }
+    }
+    vector<double> uList;
+    while (!valueQueue.empty()) {
+        uList.push_back(valueQueue.top());
+        valueQueue.pop();
+    }
+    max = uList[uList.size() - 1];
+    min = uList[0];
+    this->uEdges[0] = max;
+    this->uEdges[1] = min;
+    unordered_map<double, double> normalizedValueMap;
+    vector<double> normalizedUList;
+    for (double value : uList) {
+        double normalizedValue = (value - min) / (max - min);
+        normalizedUList.push_back(normalizedValue);
+        normalizedValueMap[value] = normalizedValue;
+    }
+    for (auto& pair : pointMap) {
+        pair.second = normalizedValueMap[pair.second];
+    }
+    //pointMap现在是（坐标点，归一化后的值)
+    vector<double> rangeList;
+    map<double, double> colorMap;
+    CalcTools::evenDistribute(normalizedUList, rangeList, colorMap);
+    for (auto& pair : pointMap) {
+        Point point = pair.first;
+        double value = pair.second;
+        double targetValue = CalcTools::getMappedValue(value, rangeList, colorMap);
+        QColor color = CalcTools::getColor(value);
+        QBrush brush;
+        brush.setStyle(Qt::SolidPattern);
+        brush.setColor(color);
+        QGraphicsRectItem* tempGraphicsItem = new QGraphicsRectItem(point.x - 0.05, point.y - 0.05, 0.1, 0.1);
+        tempGraphicsItem->setPen(pen);
+        tempGraphicsItem->setBrush(brush);
+        uItems.append((QGraphicsItem*)tempGraphicsItem);
+        //ui->graphicsView->myScene->addRect(point.x - 0.05, point.y - 0.05, 0.1, 0.1, pen)->setBrush(brush);
+    }
+    //生成竖直位移云图
+    pointMap.clear();
+    while (!valueQueue.empty()) {
+        valueQueue.pop();
+    }
+    for (MechanicBehavior& info : mshInfo.mechanicBehaviors) {
+        double minX, minY, maxX, maxY;
+        minX = std::min({ info.p1.x, info.p2.x, info.p3.x });
+        maxX = std::max({ info.p1.x, info.p2.x, info.p3.x });
+        minY = std::min({ info.p1.y, info.p2.y, info.p3.y });
+        maxY = std::max({ info.p1.y, info.p2.y, info.p3.y });
+        for (double x = minX; x <= maxX; x += 0.1) {
+            for (double y = minY; y <= maxY; y += 0.1) {
+                if (CalcTools::isInTriangle(x, y, info.p1.x, info.p1.y, info.p2.x, info.p2.y, info.p3.x, info.p3.y)) {
+                    double u, v;
+                    CalcTools::getUV(x, y, info, u, v);
+                    pointMap[Point(x, y)] = v;
+                    valueQueue.push(v);
+                }
+            }
+        }
+    }
+    vector<double> vList;
+    while (!valueQueue.empty()) {
+        vList.push_back(valueQueue.top());
+        valueQueue.pop();
+    }
+    max = vList[vList.size() - 1];
+    min = vList[0];
+    this->vEdges[0] = max;
+    this->vEdges[1] = min;
+    normalizedValueMap.clear();
+    vector<double> normalizedVList;
+    for (double value : vList) {
+        double normalizedValue = (value - min) / (max - min);
+        normalizedVList.push_back(normalizedValue);
+        normalizedValueMap[value] = normalizedValue;
+    }
+    for (auto& pair : pointMap) {
+        pair.second = normalizedValueMap[pair.second];
+    }
+    //pointMap现在是（坐标点，归一化后的值)
+    rangeList.clear();
+    colorMap.clear();
+    CalcTools::evenDistribute(normalizedVList, rangeList, colorMap);
+    for (auto& pair : pointMap) {
+        Point point = pair.first;
+        double value = pair.second;
+        double targetValue = CalcTools::getMappedValue(value, rangeList, colorMap);
+        QColor color = CalcTools::getColor(value);
+        QBrush brush;
+        brush.setStyle(Qt::SolidPattern);
+        brush.setColor(color);
+        QGraphicsRectItem* tempGraphicsItem = new QGraphicsRectItem(point.x - 0.05, point.y - 0.05, 0.1, 0.1);
+        tempGraphicsItem->setPen(pen);
+        tempGraphicsItem->setBrush(brush);
+        vItems.append((QGraphicsItem*)tempGraphicsItem);
+        //ui->graphicsView->myScene->addRect(point.x - 0.05, point.y - 0.05, 0.1, 0.1, pen)->setBrush(brush);
+    }
+
+    curItemsFlag = 0;
 }
 
+void MainWindow::clearItems()
+{
+    if (curItemsFlag == 0) {
+        return;
+    }
+    else if (curItemsFlag == 1) {
+        for (QGraphicsItem* graphicsItem : this->stressItems) {
+            ui->graphicsView->myScene->removeItem(graphicsItem);
+        }
+    }
+    else if (curItemsFlag == 2) {
+        for (QGraphicsItem* graphicsItem : this->uItems) {
+            ui->graphicsView->myScene->removeItem(graphicsItem);
+        }
+    }
+    else if (curItemsFlag == 3) {
+        for (QGraphicsItem* graphicsItem : this->vItems) {
+            ui->graphicsView->myScene->removeItem(graphicsItem);
+        }
+    }
+
+}
+
+void MainWindow::renderStress()//渲染
+{
+    clearItems();
+    for (QGraphicsItem* graphicsItem : this->stressItems) {
+        ui->graphicsView->myScene->addItem(graphicsItem);
+    }
+    ui->graphicsView->showRenderInfo(this->stressEdges[0], this->stressEdges[1]);
+    curItemsFlag = 1;
+}
+
+void MainWindow::renderU() {
+    clearItems();
+    for (QGraphicsItem* graphicsItem : this->uItems) {
+        ui->graphicsView->myScene->addItem(graphicsItem);
+    }
+    ui->graphicsView->showRenderInfo(this->uEdges[0], this->uEdges[1]);
+    curItemsFlag = 2;
+    
+}
+
+void MainWindow::renderV() {
+    clearItems();
+    for (QGraphicsItem* graphicsItem : this->vItems) {
+        ui->graphicsView->myScene->addItem(graphicsItem);
+    }
+    ui->graphicsView->showRenderInfo(this->vEdges[0], this->vEdges[1]);
+    curItemsFlag = 3;
+}
 
 void MainWindow::clear()//清空所有信息
 {
-    ui->graphicsView->scene()->clear();
+    //originItems.clear();
+    //stressItems.clear();
+    //uItems.clear();
+    //vItems.clear();
+    QList<QGraphicsItem*> tempItemList = ui->graphicsView->myScene->items();
+    for (QGraphicsItem* graphicsItem : tempItemList) {
+        ui->graphicsView->myScene->removeItem(graphicsItem);
+    }
+    while (!originItems.isEmpty()) {
+        QGraphicsItem* graphicsItem = originItems.first();
+        delete graphicsItem;
+        originItems.removeFirst();
+    }
+    while (!stressItems.isEmpty()) {
+        QGraphicsItem* graphicsItem = stressItems.first();
+        delete graphicsItem;
+        stressItems.removeFirst();
+    }
+    while (!uItems.isEmpty()) {
+        QGraphicsItem* graphicsItem = uItems.first();
+        delete graphicsItem;
+        uItems.removeFirst();
+    }
+    while (!vItems.isEmpty()) {
+        QGraphicsItem* graphicsItem = vItems.first();
+        delete graphicsItem;
+        vItems.removeFirst();
+    }
     gmsh::finalize();
     this->calcAction->setEnabled(false);
-    this->renderAction->setEnabled(false);
+    this->renderStressAction->setEnabled(false);
+    this->renderUAction->setEnabled(false);
+    this->renderVAction->setEnabled(false);
     ui->progressBar->setValue(0);
     mshInfo.clearAll();
     ui->graphicsView->gradientBox->hide();
@@ -630,7 +828,10 @@ void MainWindow::activateCalc()
 
 void MainWindow::setRenderEnable(bool enable)
 {
-    this->renderAction->setEnabled(enable);
+    this->renderStressAction->setEnabled(enable);
+    this->renderUAction->setEnabled(enable);
+    this->renderVAction->setEnabled(enable);
+    this->generateAllColorMap();
 }
 
 void MainWindow::updateProgressBar(int value)
@@ -650,8 +851,12 @@ void MainWindow::showConcentratedForceInfo(double x, double y, double xForce, do
         QString::number(xForce) + ",竖直作用力：" + QString::number(yForce));
 }
 
-void MainWindow::showUniformForceInfo(double startX, double startY, double endX, double endY, double xForce, double yForce) {
+void MainWindow::showUniformForceInfo(double startX, double startY, double endX, double endY, double xForce, double yForce, vector<Force> forces) {
     ui->outputEdit->append("添加了均布力：起始位置x:" + QString::number(startX) + ", 起始坐标y:" + QString::number(startY) + 
         "终点坐标x:" + QString::number(endX) + "终点坐标y:" + QString::number(endY) + ", 水平作用力：" +
         QString::number(xForce) + ",竖直作用力：" + QString::number(yForce));
+    for (Force force : forces) {
+        ui->graphicsView->handleDirectForceInput(force);
+    }
+    
 }

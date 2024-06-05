@@ -63,7 +63,7 @@ public:
     void createMsh();
     void saveMsh(bool& success, QString& filePath);
     bool loadMsh(QString& filePath);
-    void addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection);
+    void addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection, vector<Force> &paintForces);
     void addPointForce(double x, double y, double xForce, double yForce);
     void saveConstraint(bool& success, QString& filePath);
     void loadConstraint(bool& success, QString& filePath);

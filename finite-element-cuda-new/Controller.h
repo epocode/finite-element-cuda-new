@@ -17,7 +17,7 @@ public:
 	static void generateMsh();
 	static void saveMsh(bool& success, QString& filePath);
 	static bool loadMsh(QString &filePath);
-	static void addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection);
+	static void addUniformLoad(double startX, double startY, double endX, double endY, double xDirection, double yDirection, vector<Force> &forces);
 	static void addConcentratedForce(double x, double y, double xForce, double yForce);
 	static void addEdges(double x, double y, bool xFixed, bool yFixed);
 	static void saveConstraint(bool& success, QString& filePath);

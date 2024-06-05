@@ -72,13 +72,12 @@ void UniformForceOperator::handleInput(double endX, double endY)
 	}
 	view->setMode("COMMON");
 	emit view->resetInputAreaSignal();
-	UniformForceGraphicsItem* forceItem = new UniformForceGraphicsItem(nullptr, startX, startY, endX, endY, xForce, yForce, view->pen);
-	view->myScene->addItem(forceItem);
-	Controller::addUniformLoad(startX, startY, endX, endY, xForce, yForce);
+	vector<Force> forces;
+	Controller::addUniformLoad(startX, startY, endX, endY, xForce, yForce, forces);//这里处理均布力变成多个集中力
 	this->isFirst = true;
 	view->setMode("COMMON");
 	emit view->resetInputAreaSignal();
 	view->myScene->removeItem((QGraphicsItem*)tempItem);
 	delete tempItem;
-	emit view->addUniformForceSignal(startX, startY, endX, endY, xForce, yForce);
+	emit view->addUniformForceSignal(startX, startY, endX, endY, xForce, yForce, forces);
 }
